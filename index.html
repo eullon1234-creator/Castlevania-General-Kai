@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Castlevania: General Kai - Metroidvania 2D</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        body {
+            background-color: #050807;
+            color: #d8f5e5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(20, 245, 155, 0.25), 0 0 90px rgba(0, 0, 0, 0.95);
+            border: 2px solid rgba(40, 200, 130, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #06090c;
+        }
+        canvas {
+            display: block;
+        }
+        #hud {
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            pointer-events: none;
+        }
+        .chi-orb {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 3px solid #1ef59b;
+            background: radial-gradient(circle at 35% 35%, #05291b 0%, #03140e 80%);
+            box-shadow: 0 0 20px rgba(30, 245, 155, 0.4), inset 0 0 15px rgba(30, 245, 155, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .chi-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(0deg, #077943 0%, #1ef59b 100%);
+            box-shadow: 0 0 15px #1ef59b;
+            transition: height 0.15s ease-out;
+            opacity: 0.9;
+        }
+        .chi-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 8px #000;
+        }
+        .health-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .health-label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #92e0be;
+            font-weight: 600;
+        }
+        .health-shards {
+            display: flex;
+            gap: 6px;
+        }
+        .shard {
+            width: 26px;
+            height: 18px;
+            background: #1ef59b;
+            border: 2px solid #ffffff;
+            border-radius: 3px;
+            transform: skewX(-20deg);
+            box-shadow: 0 0 10px rgba(30, 245, 155, 0.7);
+            transition: all 0.2s;
+        }
+        .shard.lost {
+            background: #1a2c24;
+            border-color: #3b5a4d;
+            box-shadow: none;
+            opacity: 0.4;
+        }
+        #boss-hud {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        #boss-hud.visible {
+            opacity: 1;
+        }
+        .boss-name {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #e5b9f7;
+            text-shadow: 0 0 10px rgba(212, 107, 245, 0.8);
+        }
+        .boss-bar-bg {
+            width: 100%;
+            height: 14px;
+            background: #190c24;
+            border: 2px solid #b661d9;
+            border-radius: 7px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(182, 97, 217, 0.4);
+        }
+        .boss-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #741e9c, #d56cf7);
+            transition: width 0.1s linear;
+        }
+        #controls-legend {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(8, 15, 12, 0.85);
+            border: 1px solid rgba(40, 200, 130, 0.35);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #b7e4cf;
+            line-height: 1.6;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+        .key {
+            background: #183327;
+            border: 1px solid #2ae496;
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-weight: bold;
+            color: #fff;
+        }
+        #popup-message {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(5, 20, 15, 0.95);
+            border: 2px solid #20f59e;
+            box-shadow: 0 0 35px rgba(32, 245, 158, 0.5);
+            padding: 24px 35px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 10;
+        }
+        #popup-message h2 {
+            color: #20f59e;
+            font-size: 26px;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 12px #20f59e;
+        }
+        #popup-message p {
+            color: #e2f9ee;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        #popup-message button {
+            background: #1ef59b;
+            color: #03140d;
+            border: none;
+            padding: 9px 24px;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #popup-message button:hover {
+            background: #ffffff;
+            box-shadow: 0 0 15px #1ef59b;
+        }
+        #art-viewer-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            background: rgba(10, 30, 22, 0.85);
+            border: 1px solid #1ef59b;
+            color: #1ef59b;
+            padding: 7px 14px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        #art-viewer-btn:hover {
+            background: #1ef59b;
+            color: #04120b;
+        }
+        #modal-art {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.88);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: #0b1410;
+            border: 2px solid #20f59e;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 900px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 40px rgba(32, 245, 158, 0.3);
+        }
+        .art-gallery {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .art-card {
+            flex: 1;
+            text-align: center;
+        }
+        .art-card img {
+            width: 100%;
+            max-height: 480px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #277755;
+        }
+        .art-card h4 {
+            margin-top: 8px;
+            color: #20f59e;
+            letter-spacing: 1px;
+        }
+        .close-modal {
+            align-self: flex-end;
+            background: transparent;
+            border: 1px solid #ff5577;
+            color: #ff5577;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .close-modal:hover {
+            background: #ff5577;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+        <!-- HUD: Vida e Chi de Kai -->
+        <div id="hud">
+            <div class="chi-orb">
+                <div class="chi-fill" id="chi-fill"></div>
+                <div class="chi-label" id="chi-text">50%</div>
+            </div>
+            <div class="health-container">
+                <div class="health-label">JADE SHARDS (HP)</div>
+                <div class="health-shards" id="shards-container"></div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div id="controls-legend">
+            <div><span class="key">A</span> / <span class="key">D</span> ou <span class="key">←</span> <span class="key">→</span> : Andar</div>
+            <div><span class="key">Espaço</span> ou <span class="key">W</span> : Pulo / Wall-Jump</div>
+            <div><span class="key">Shift</span> : Chi Dash (Esquiva)</div>
+            <div><span class="key">Z</span> ou <span class="key">J</span> ou <span class="key">Click Esq</span> : Chicote de Jade (Dir/Cima/Baixo)</div>
+            <div><span class="key">X</span> ou <span class="key">K</span> : Jade Cyclone (Giro 360°)</div>
+            <div><span class="key">C</span> ou <span class="key">L</span> ou <span class="key">Click Dir</span> : Jade Grapple (Gancho)</div>
+            <div><span class="key">F</span> : Curar Chi (Segurar)</div>
+        </div>
+
+        <!-- Barra do Boss: Bao-Zhi -->
+        <div id="boss-hud">
+            <div class="boss-name">Bao-Zhi, O Eremita da Praga Óssea</div>
+            <div class="boss-bar-bg">
+                <div class="boss-bar-fill" id="boss-bar"></div>
+            </div>
+        </div>
+
+        <!-- Notificação de Vitória / Amuleto Obtido -->
+        <div id="popup-message">
+            <h2 id="popup-title">AMULETO DE JADE ABSORVIDO!</h2>
+            <p id="popup-desc">Você drenou o Chi de Bao-Zhi! O Amuleto do Eremita agora está na cintura do General Kai.</p>
+            <button onclick="resetBossBattle()">Jogar Batalha Novamente</button>
+        </div>
+
+        <button id="art-viewer-btn" onclick="openArtModal()">Ver Artes Conceituais</button>
+    </div>
+
+    <!-- Modal com as artes conceituais -->
+    <div id="modal-art">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeArtModal()">FECHAR ✕</button>
+            <div class="art-gallery">
+                <div class="art-card">
+                    <img src="general_kai_concept_1788720142868.jpg" alt="General Kai">
+                    <h4>General Kai - O Colecionador</h4>
+                </div>
+                <div class="art-card">
+                    <img src="baozhi_boss_concept_1788720206068.jpg" alt="Bao Zhi">
+                    <h4>Bao-Zhi - O Eremita da Praga</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- SÍNTESE DE ÁUDIO PROCEDURAL (Web Audio API) --- */
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        function playSound(type) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            if (type === 'whip') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.16);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.16);
+            } else if (type === 'hit') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'jump') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(360, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'cyclone') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(250, now + 0.35);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'grapple') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.18);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.18);
+            } else if (type === 'heal') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.4);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        }
+
+        /* --- CONFIGURAÇÃO DO CANVAS --- */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        /* --- ENTRADA DE TECLADO & MOUSE --- */
+        const keys = {};
+        let mouseX = 0, mouseY = 0;
+
+        window.addEventListener('keydown', e => {
+            initAudio();
+            keys[e.key.toLowerCase()] = true;
+            if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+        });
+        window.addEventListener('keyup', e => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+        canvas.addEventListener('mousedown', e => {
+            initAudio();
+            if (e.button === 0) keys['click_left'] = true;
+            if (e.button === 2) keys['click_right'] = true;
+        });
+        canvas.addEventListener('mouseup', e => {
+            if (e.button === 0) keys['click_left'] = false;
+            if (e.button === 2) keys['click_right'] = false;
+        });
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        /* --- SISTEMA DE PARTÍCULAS E SCREEN SHAKE --- */
+        let screenShake = 0;
+        const particles = [];
+        function addParticle(x, y, vx, vy, color, size, life, glow = true) {
+            particles.push({ x, y, vx, vy, color, size, life, maxLife: life, glow });
+        }
+
+        /* --- ARENA E PLATAFORMAS --- */
+        const platforms = [
+            { x: 0, y: 640, w: 1280, h: 80, type: 'ground' }, // Chão principal
+            { x: 180, y: 480, w: 220, h: 22, type: 'stone' },
+            { x: 880, y: 480, w: 220, h: 22, type: 'stone' },
+            { x: 490, y: 360, w: 300, h: 22, type: 'stone' },
+            { x: 80, y: 260, w: 180, h: 20, type: 'stone' },
+            { x: 1020, y: 260, w: 180, h: 20, type: 'stone' },
+            { x: 0, y: 0, w: 30, h: 720, type: 'wall' },
+            { x: 1250, y: 0, w: 30, h: 720, type: 'wall' }
+        ];
+
+        // Anéis místicos de grapple
+        const grapplePoints = [
+            { x: 300, y: 200, active: false },
+            { x: 640, y: 150, active: false },
+            { x: 980, y: 200, active: false }
+        ];
+
+        /* --- PROTAGONISTA: GENERAL KAI --- */
+        const kai = {
+            x: 200,
+            y: 550,
+            w: 52,
+            h: 70,
+            vx: 0,
+            vy: 0,
+            speed: 5.8,
+            facing: 1,
+            grounded: false,
+            onWall: 0,
+            jumpBuffer: 0,
+            coyoteTime: 0,
+            
+            // Atributos
+            maxHp: 5,
+            hp: 5,
+            chi: 50,
+            maxChi: 100,
+            
+            // Ações e Timers
+            dashCooldown: 0,
+            isDashing: 0,
+            attackTimer: 0,
+            attackDir: 'side',
+            cycloneTimer: 0,
+            healChannel: 0,
+            
+            // Grapple hook
+            grappleActive: false,
+            grappleTarget: null,
+            grappleT: 0,
+            
+            // Lâminas e física de correntes
+            chains: [
+                { angle: 0, length: 75 },
+                { angle: 0, length: 90 }
+            ]
+        };
+
+        /* --- CHEFE 1: BAO-ZHI --- */
+        const baozhi = {
+            x: 950,
+            y: 400,
+            w: 64,
+            h: 90,
+            vx: 0,
+            vy: 0,
+            hoverBaseY: 400,
+            hoverTimer: 0,
+            maxHp: 300,
+            hp: 300,
+            state: 'hover',
+            stateTimer: 120,
+            facing: -1,
+            censers: [
+                { angle: 0, dist: 70, speed: 0.035 },
+                { angle: 2.09, dist: 70, speed: 0.035 },
+                { angle: 4.18, dist: 70, speed: 0.035 }
+            ],
+            bossFightActive: false
+        };
+
+        const bossProjectiles = [];
+
+        /* --- ATUALIZAÇÃO DA INTERFACE (HUD) --- */
+        function updateHUD() {
+            const shardsContainer = document.getElementById('shards-container');
+            shardsContainer.innerHTML = '';
+            for (let i = 0; i < kai.maxHp; i++) {
+                const shard = document.createElement('div');
+                shard.className = 'shard' + (i < kai.hp ? '' : ' lost');
+                shardsContainer.appendChild(shard);
+            }
+
+            document.getElementById('chi-fill').style.height = `${kai.chi}%`;
+            document.getElementById('chi-text').innerText = `${Math.floor(kai.chi)}%`;
+
+            const bossHud = document.getElementById('boss-hud');
+            if (baozhi.bossFightActive && baozhi.hp > 0) {
+                bossHud.classList.add('visible');
+                const pct = Math.max(0, (baozhi.hp / baozhi.maxHp) * 100);
+                document.getElementById('boss-bar').style.width = `${pct}%`;
+            } else if (baozhi.hp <= 0) {
+                bossHud.classList.remove('visible');
+            }
+        }
+
+        /* --- LOOP PRINCIPAL E FÍSICA --- */
+        function update() {
+            if (screenShake > 0) screenShake *= 0.88;
+            if (screenShake < 0.2) screenShake = 0;
+
+            const moveLeft = keys['a'] || keys['arrowleft'];
+            const moveRight = keys['d'] || keys['arrowright'];
+            const jumpKey = keys[' '] || keys['w'] || keys['arrowup'];
+            const dashKey = keys['shift'];
+            const attackKey = keys['z'] || keys['j'] || keys['click_left'];
+            const cycloneKey = keys['x'] || keys['k'];
+            const grappleKey = keys['c'] || keys['l'] || keys['click_right'];
+            const healKey = keys['f'];
+
+            if (kai.dashCooldown > 0) kai.dashCooldown--;
+            if (kai.attackTimer > 0) kai.attackTimer--;
+            if (kai.cycloneTimer > 0) kai.cycloneTimer--;
+
+            // Cura pelo Chi
+            if (healKey && kai.grounded && kai.chi >= 30 && kai.hp < kai.maxHp) {
+                kai.healChannel++;
+                kai.vx *= 0.5;
+                addParticle(kai.x + kai.w/2 + (Math.random()-0.5)*40, kai.y + kai.h - Math.random()*50, 0, -1.8, '#1ef59b', 4, 25);
+                if (kai.healChannel >= 50) {
+                    kai.chi -= 30;
+                    kai.hp++;
+                    kai.healChannel = 0;
+                    playSound('heal');
+                    screenShake = 3;
+                    for (let i = 0; i < 30; i++) {
+                        addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*8, (Math.random()-0.5)*8, '#5effbb', 6, 35);
+                    }
+                }
+            } else {
+                kai.healChannel = 0;
+            }
+
+            // Dash Fantasma
+            if (dashKey && kai.dashCooldown === 0 && !kai.isDashing && kai.chi >= 5) {
+                kai.isDashing = 14;
+                kai.dashCooldown = 40;
+                kai.chi -= 5;
+                kai.vy = 0;
+                kai.vx = kai.facing * 16;
+                playSound('whip');
+                for (let i = 0; i < 15; i++) {
+                    addParticle(kai.x + kai.w/2, kai.y + kai.h/2, -kai.facing*Math.random()*4, (Math.random()-0.5)*4, '#17ff97', 5, 20);
+                }
+            }
+
+            if (kai.isDashing > 0) {
+                kai.isDashing--;
+                kai.vy = 0;
+                addParticle(kai.x + kai.w/2, kai.y + kai.h/2, 0, 0, 'rgba(30, 245, 155, 0.5)', 8, 12);
+            } else if (!kai.grappleActive) {
+                if (moveLeft) {
+                    kai.vx = -kai.speed;
+                    kai.facing = -1;
+                } else if (moveRight) {
+                    kai.vx = kai.speed;
+                    kai.facing = 1;
+                } else {
+                    kai.vx *= 0.8;
+                    if (Math.abs(kai.vx) < 0.2) kai.vx = 0;
+                }
+
+                kai.vy += 0.65;
+                if (kai.vy > 14) kai.vy = 14;
+
+                if (kai.onWall !== 0 && !kai.grounded && kai.vy > 0) {
+                    kai.vy = Math.min(kai.vy, 2.5);
+                    addParticle(kai.onWall === -1 ? kai.x : kai.x + kai.w, kai.y + kai.h*0.7, 0, -1, '#3bcca0', 3, 10);
+                }
+
+                if (jumpKey) {
+                    if (kai.coyoteTime > 0) {
+                        kai.vy = -13.5;
+                        kai.coyoteTime = 0;
+                        playSound('jump');
+                    } else if (kai.onWall !== 0) {
+                        kai.vy = -12.5;
+                        kai.vx = -kai.onWall * 9;
+                        kai.facing = -kai.onWall;
+                        kai.onWall = 0;
+                        playSound('jump');
+                        for (let i = 0; i < 10; i++) {
+                            addParticle(kai.x, kai.y + kai.h/2, kai.facing*3, (Math.random()-0.5)*3, '#1ef59b', 4, 15);
+                        }
+                    }
+                }
+            }
+
+            // Grapple Hook
+            if (grappleKey && !kai.grappleActive) {
+                let nearest = null;
+                let minDist = 380;
+                for (let gp of grapplePoints) {
+                    const d = Math.hypot(gp.x - (kai.x + kai.w/2), gp.y - (kai.y + kai.h/2));
+                    if (d < minDist) {
+                        minDist = d;
+                        nearest = gp;
+                    }
+                }
+                if (nearest) {
+                    kai.grappleActive = true;
+                    kai.grappleTarget = nearest;
+                    nearest.active = true;
+                    playSound('grapple');
+                }
+            }
+
+            if (kai.grappleActive && kai.grappleTarget) {
+                const target = kai.grappleTarget;
+                const dx = target.x - (kai.x + kai.w/2);
+                const dy = target.y - (kai.y + kai.h/2);
+                const dist = Math.hypot(dx, dy);
+
+                kai.vx = (dx / dist) * 16;
+                kai.vy = (dy / dist) * 16;
+
+                addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, '#20f59e', 5, 12);
+
+                if (dist < 40 || keys[' '] || keys['w']) {
+                    kai.grappleActive = false;
+                    kai.grappleTarget.active = false;
+                    kai.grappleTarget = null;
+                    kai.vy = -10;
+                }
+            }
+
+            // Ataques com chicote
+            if (attackKey && kai.attackTimer === 0) {
+                kai.attackTimer = 18;
+                playSound('whip');
+
+                if (keys['arrowup'] || keys['w']) {
+                    kai.attackDir = 'up';
+                } else if ((keys['arrowdown'] || keys['s']) && !kai.grounded) {
+                    kai.attackDir = 'down';
+                } else {
+                    kai.attackDir = 'side';
+                }
+
+                checkWhipHit();
+            }
+
+            // Cyclone
+            if (cycloneKey && kai.cycloneTimer === 0 && kai.chi >= 15) {
+                kai.cycloneTimer = 30;
+                kai.chi -= 15;
+                screenShake = 6;
+                playSound('cyclone');
+                checkCycloneHit();
+            }
+
+            kai.x += kai.vx;
+            handleHorizontalCollisions();
+
+            kai.y += kai.vy;
+            handleVerticalCollisions();
+
+            if (kai.grounded) kai.coyoteTime = 8;
+            else if (kai.coyoteTime > 0) kai.coyoteTime--;
+
+            kai.x = Math.max(30, Math.min(1250 - kai.w, kai.x));
+
+            updateBaoZhi();
+            updateProjectiles();
+            updateParticles();
+            updateHUD();
+        }
+
+        /* --- DETECÇÃO DE COMBATE DE KAI --- */
+        function checkWhipHit() {
+            const kx = kai.x + kai.w / 2;
+            const ky = kai.y + kai.h / 2;
+            let hitBox = { x: 0, y: 0, w: 0, h: 0 };
+
+            if (kai.attackDir === 'side') {
+                hitBox = {
+                    x: kai.facing === 1 ? kx : kx - 140,
+                    y: ky - 40,
+                    w: 140,
+                    h: 80
+                };
+            } else if (kai.attackDir === 'up') {
+                hitBox = {
+                    x: kx - 60,
+                    y: ky - 140,
+                    w: 120,
+                    h: 140
+                };
+            } else if (kai.attackDir === 'down') {
+                hitBox = {
+                    x: kx - 60,
+                    y: ky,
+                    w: 120,
+                    h: 130
+                };
+            }
+
+            if (boxIntersect(hitBox, baozhi) && baozhi.hp > 0 && baozhi.state !== 'teleport') {
+                baozhi.hp -= 20;
+                kai.chi = Math.min(kai.maxChi, kai.chi + 12);
+                screenShake = 6;
+                playSound('hit');
+
+                if (kai.attackDir === 'down') {
+                    kai.vy = -12;
+                    kai.coyoteTime = 5;
+                }
+
+                for (let i = 0; i < 20; i++) {
+                    addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*12, (Math.random()-0.5)*12, '#20f59e', 5, 20);
+                }
+
+                if (baozhi.hp <= 0) defeatBoss();
+            }
+
+            for (let i = bossProjectiles.length - 1; i >= 0; i--) {
+                const p = bossProjectiles[i];
+                if (Math.hypot(p.x - (hitBox.x + hitBox.w/2), p.y - (hitBox.y + hitBox.h/2)) < 60) {
+                    bossProjectiles.splice(i, 1);
+                    kai.chi = Math.min(kai.maxChi, kai.chi + 5);
+                    screenShake = 4;
+                    playSound('hit');
+                    if (kai.attackDir === 'down') kai.vy = -11;
+                }
+            }
+        }
+
+        function checkCycloneHit() {
+            const kx = kai.x + kai.w / 2;
+            const ky = kai.y + kai.h / 2;
+            const cycloneRadius = 150;
+
+            const distBoss = Math.hypot(baozhi.x + baozhi.w/2 - kx, baozhi.y + baozhi.h/2 - ky);
+            if (distBoss < cycloneRadius + 40 && baozhi.hp > 0) {
+                baozhi.hp -= 40;
+                kai.chi = Math.min(kai.maxChi, kai.chi + 15);
+                playSound('hit');
+                for (let i = 0; i < 25; i++) {
+                    addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*10, (Math.random()-0.5)*10, '#1ef59b', 6, 25);
+                }
+                if (baozhi.hp <= 0) defeatBoss();
+            }
+
+            for (let i = bossProjectiles.length - 1; i >= 0; i--) {
+                const p = bossProjectiles[i];
+                if (Math.hypot(p.x - kx, p.y - ky) < cycloneRadius) {
+                    bossProjectiles.splice(i, 1);
+                }
+            }
+        }
+
+        /* --- IA DO PRIMEIRO CHEFE (BAO-ZHI) --- */
+        function updateBaoZhi() {
+            if (baozhi.hp <= 0) return;
+
+            if (!baozhi.bossFightActive && Math.hypot(kai.x - baozhi.x, kai.y - baozhi.y) < 600) {
+                baozhi.bossFightActive = true;
+            }
+            if (!baozhi.bossFightActive) return;
+
+            for (let c of baozhi.censers) {
+                c.angle += c.speed;
+                const cx = (baozhi.x + baozhi.w/2) + Math.cos(c.angle) * c.dist;
+                const cy = (baozhi.y + baozhi.h/2) + Math.sin(c.angle) * c.dist;
+                if (Math.random() < 0.3) {
+                    addParticle(cx, cy, (Math.random()-0.5)*1.5, -Math.random()*2, '#a855f7', 4, 30, true);
+                }
+            }
+
+            baozhi.hoverTimer += 0.04;
+            baozhi.y = baozhi.hoverBaseY + Math.sin(baozhi.hoverTimer) * 25;
+            baozhi.facing = (kai.x < baozhi.x) ? -1 : 1;
+
+            baozhi.stateTimer--;
+            if (baozhi.stateTimer <= 0) {
+                if (baozhi.state === 'hover') {
+                    const choice = Math.random();
+                    if (choice < 0.6) {
+                        baozhi.state = 'cast';
+                        baozhi.stateTimer = 90;
+                    } else {
+                        baozhi.state = 'teleport';
+                        baozhi.stateTimer = 45;
+                    }
+                } else if (baozhi.state === 'cast') {
+                    for (let i = -1; i <= 1; i++) {
+                        const angle = Math.atan2(kai.y - baozhi.y, kai.x - baozhi.x) + (i * 0.3);
+                        bossProjectiles.push({
+                            x: baozhi.x + baozhi.w/2,
+                            y: baozhi.y + baozhi.h/2,
+                            vx: Math.cos(angle) * 4.5,
+                            vy: Math.sin(angle) * 4.5,
+                            radius: 12,
+                            life: 240
+                        });
+                    }
+                    baozhi.state = 'hover';
+                    baozhi.stateTimer = 80;
+                } else if (baozhi.state === 'teleport') {
+                    const spots = [
+                        { x: 220, y: 380 },
+                        { x: 620, y: 260 },
+                        { x: 960, y: 380 }
+                    ];
+                    const next = spots[Math.floor(Math.random() * spots.length)];
+                    baozhi.x = next.x;
+                    baozhi.hoverBaseY = next.y;
+                    baozhi.state = 'hover';
+                    baozhi.stateTimer = 70;
+
+                    for (let i = 0; i < 30; i++) {
+                        addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*9, (Math.random()-0.5)*9, '#9333ea', 5, 25);
+                    }
+                }
+            }
+        }
+
+        /* --- PROJÉTEIS & DANO EM KAI --- */
+        function updateProjectiles() {
+            for (let i = bossProjectiles.length - 1; i >= 0; i--) {
+                const p = bossProjectiles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+
+                addParticle(p.x, p.y, 0, 0, '#c084fc', 6, 12);
+
+                const distKai = Math.hypot(p.x - (kai.x + kai.w/2), p.y - (kai.y + kai.h/2));
+                if (distKai < p.radius + 20 && kai.isDashing === 0) {
+                    kai.hp--;
+                    screenShake = 9;
+                    playSound('hit');
+                    kai.vx = (p.vx > 0 ? 1 : -1) * 7;
+                    kai.vy = -6;
+                    bossProjectiles.splice(i, 1);
+
+                    if (kai.hp <= 0) {
+                        kai.hp = kai.maxHp;
+                        kai.x = 200;
+                        kai.y = 550;
+                    }
+                    continue;
+                }
+
+                if (p.life <= 0 || p.x < 0 || p.x > 1280 || p.y < 0 || p.y > 720) {
+                    bossProjectiles.splice(i, 1);
+                }
+            }
+        }
+
+        function defeatBoss() {
+            baozhi.state = 'defeated';
+            screenShake = 15;
+            for (let i = 0; i < 100; i++) {
+                addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*15, (Math.random()-0.5)*15, '#20f59e', 8, 60);
+            }
+            document.getElementById('popup-message').style.display = 'block';
+        }
+
+        function resetBossBattle() {
+            baozhi.hp = baozhi.maxHp;
+            baozhi.state = 'hover';
+            baozhi.stateTimer = 120;
+            baozhi.x = 950;
+            baozhi.hoverBaseY = 400;
+            baozhi.bossFightActive = true;
+            kai.hp = kai.maxHp;
+            kai.chi = 50;
+            document.getElementById('popup-message').style.display = 'none';
+        }
+
+        /* --- COLISÕES DO TERRENO --- */
+        function handleHorizontalCollisions() {
+            kai.onWall = 0;
+            for (let plat of platforms) {
+                if (boxIntersect(kai, plat)) {
+                    if (kai.vx > 0) {
+                        kai.x = plat.x - kai.w;
+                        kai.onWall = 1;
+                    } else if (kai.vx < 0) {
+                        kai.x = plat.x + plat.w;
+                        kai.onWall = -1;
+                    }
+                    kai.vx = 0;
+                }
+            }
+        }
+
+        function handleVerticalCollisions() {
+            kai.grounded = false;
+            for (let plat of platforms) {
+                if (boxIntersect(kai, plat)) {
+                    if (kai.vy > 0) {
+                        kai.y = plat.y - kai.h;
+                        kai.vy = 0;
+                        kai.grounded = true;
+                    } else if (kai.vy < 0) {
+                        kai.y = plat.y + plat.h;
+                        kai.vy = 0;
+                    }
+                }
+            }
+        }
+
+        function boxIntersect(a, b) {
+            return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        /* --- RENDERIZAÇÃO GRÁFICA --- */
+        function draw() {
+            ctx.save();
+
+            if (screenShake > 0) {
+                const rx = (Math.random() - 0.5) * screenShake;
+                const ry = (Math.random() - 0.5) * screenShake;
+                ctx.translate(rx, ry);
+            }
+
+            ctx.fillStyle = '#060a08';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const bgGradient = ctx.createRadialGradient(canvas.width/2, 200, 50, canvas.width/2, 200, 700);
+            bgGradient.addColorStop(0, 'rgba(10, 45, 30, 0.4)');
+            bgGradient.addColorStop(1, 'rgba(4, 8, 6, 1)');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0a1410';
+            ctx.fillRect(120, 100, 70, 540);
+            ctx.fillRect(450, 80, 85, 560);
+            ctx.fillRect(800, 110, 75, 530);
+            ctx.fillRect(1100, 90, 70, 550);
+
+            for (let gp of grapplePoints) {
+                ctx.strokeStyle = gp.active ? '#ffffff' : '#20f59e';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#20f59e';
+                ctx.shadowBlur = gp.active ? 25 : 12;
+                ctx.beginPath();
+                ctx.arc(gp.x, gp.y, 14, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            for (let plat of platforms) {
+                ctx.fillStyle = '#111b16';
+                ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+
+                ctx.strokeStyle = '#225c43';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+
+                ctx.fillStyle = '#1ef59b';
+                ctx.fillRect(plat.x, plat.y, plat.w, 3);
+            }
+
+            drawKai();
+
+            if (baozhi.hp > 0) drawBaoZhi();
+
+            for (let p of bossProjectiles) {
+                ctx.save();
+                ctx.shadowColor = '#d946ef';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = '#f0abfc';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            for (let p of particles) {
+                ctx.save();
+                if (p.glow) {
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 8;
+                }
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / p.maxLife;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+
+        function drawKai() {
+            const kx = kai.x + kai.w / 2;
+            const ky = kai.y + kai.h / 2;
+
+            ctx.save();
+            ctx.translate(kx, ky);
+            if (kai.facing === -1) ctx.scale(-1, 1);
+
+            if (kai.healChannel > 0) {
+                ctx.strokeStyle = 'rgba(30, 245, 155, 0.8)';
+                ctx.lineWidth = 4;
+                ctx.shadowColor = '#1ef59b';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(0, 0, 45, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            if (kai.grappleActive && kai.grappleTarget) {
+                ctx.save();
+                ctx.strokeStyle = '#20f59e';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#20f59e';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                const localX = (kai.grappleTarget.x - kx) * kai.facing;
+                const localY = kai.grappleTarget.y - ky;
+                ctx.lineTo(localX, localY);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            if (kai.cycloneTimer > 0) {
+                ctx.save();
+                ctx.strokeStyle = '#1ef59b';
+                ctx.lineWidth = 6;
+                ctx.shadowColor = '#1ef59b';
+                ctx.shadowBlur = 25;
+                ctx.beginPath();
+                ctx.arc(0, 0, 135, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            ctx.fillStyle = '#1c2420';
+            ctx.fillRect(-22, -28, 44, 56);
+
+            ctx.fillStyle = '#323d37';
+            ctx.fillRect(-18, -22, 36, 32);
+
+            ctx.fillStyle = '#121a15';
+            ctx.fillRect(-20, 10, 40, 7);
+            ctx.fillStyle = '#20f59e';
+            ctx.shadowColor = '#20f59e';
+            ctx.shadowBlur = 8;
+            ctx.fillRect(-12, 16, 6, 10);
+            ctx.fillRect(-2, 16, 6, 12);
+            ctx.fillRect(8, 16, 6, 10);
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#141c17';
+            ctx.fillRect(-16, -42, 32, 22);
+
+            ctx.fillStyle = '#20f59e';
+            ctx.shadowColor = '#20f59e';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(2, -36, 7, 4);
+            ctx.shadowBlur = 0;
+
+            ctx.strokeStyle = '#101713';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.moveTo(-10, -42);
+            ctx.quadraticCurveTo(-30, -60, -15, -75);
+            ctx.stroke();
+            ctx.strokeStyle = '#20f59e';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-18, -68);
+            ctx.lineTo(-15, -75);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#101713';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.moveTo(10, -42);
+            ctx.quadraticCurveTo(30, -60, 18, -78);
+            ctx.stroke();
+            ctx.strokeStyle = '#20f59e';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(22, -70);
+            ctx.lineTo(18, -78);
+            ctx.stroke();
+
+            if (kai.attackTimer > 0) {
+                ctx.save();
+                ctx.strokeStyle = '#1ef59b';
+                ctx.lineWidth = 5;
+                ctx.shadowColor = '#1ef59b';
+                ctx.shadowBlur = 20;
+
+                if (kai.attackDir === 'side') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 110, -0.6, 0.8);
+                    ctx.stroke();
+                    ctx.fillStyle = '#a7f3d0';
+                    ctx.fillRect(100, 10, 30, 12);
+                } else if (kai.attackDir === 'up') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 110, -2.4, -0.8);
+                    ctx.stroke();
+                    ctx.fillStyle = '#a7f3d0';
+                    ctx.fillRect(-15, -120, 14, 32);
+                } else if (kai.attackDir === 'down') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 105, 0.8, 2.3);
+                    ctx.stroke();
+                    ctx.fillStyle = '#a7f3d0';
+                    ctx.fillRect(-10, 100, 14, 30);
+                }
+                ctx.restore();
+            } else {
+                ctx.fillStyle = '#20f59e';
+                ctx.shadowColor = '#20f59e';
+                ctx.shadowBlur = 8;
+                ctx.fillRect(18, -5, 8, 26);
+                ctx.fillRect(-24, 0, 8, 24);
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.restore();
+        }
+
+        function drawBaoZhi() {
+            const bx = baozhi.x + baozhi.w / 2;
+            const by = baozhi.y + baozhi.h / 2;
+
+            ctx.save();
+            ctx.translate(bx, by);
+
+            for (let c of baozhi.censers) {
+                const cx = Math.cos(c.angle) * c.dist;
+                const cy = Math.sin(c.angle) * c.dist;
+
+                ctx.strokeStyle = '#581c87';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(cx, cy);
+                ctx.stroke();
+
+                ctx.fillStyle = '#a855f7';
+                ctx.shadowColor = '#a855f7';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.fillStyle = '#3b0764';
+            ctx.beginPath();
+            ctx.moveTo(-25, -20);
+            ctx.lineTo(25, -20);
+            ctx.lineTo(32, 45);
+            ctx.lineTo(-32, 45);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f3e8ff';
+            ctx.beginPath();
+            ctx.arc(0, -25, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1e1b4b';
+            ctx.fillRect(-10, -28, 6, 8);
+            ctx.fillRect(4, -28, 6, 8);
+            ctx.fillStyle = '#c084fc';
+            ctx.fillRect(-8, -26, 3, 4);
+            ctx.fillRect(6, -26, 3, 4);
+
+            ctx.strokeStyle = '#e9d5ff';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-12, -40);
+            ctx.lineTo(-24, -60);
+            ctx.moveTo(12, -40);
+            ctx.lineTo(24, -60);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#d8b4fe';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(35, -45);
+            ctx.lineTo(35, 45);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function openArtModal() {
+            document.getElementById('modal-art').style.display = 'flex';
+        }
+        function closeArtModal() {
+            document.getElementById('modal-art').style.display = 'none';
+        }
+
+        updateHUD();
+        setInterval(update, 1000 / 60);
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
