@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Kai 3D - Three.js Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background-color: #030605;
+            color: #d8f5e5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            filter: drop-shadow(0 4px 15px rgba(0,0,0,0.8));
+        }
+        h1 {
+            font-size: 26px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #2cfbad;
+            text-shadow: 0 0 15px rgba(44, 251, 173, 0.7);
+        }
+        p {
+            font-size: 13px;
+            color: #a7f3d0;
+            letter-spacing: 1px;
+        }
+        #controls-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 14px;
+            background: rgba(6, 18, 13, 0.85);
+            padding: 12px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(44, 251, 173, 0.4);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9), 0 0 20px rgba(44, 251, 173, 0.2);
+        }
+        button {
+            background: rgba(12, 38, 27, 0.8);
+            border: 1px solid #2cfbad;
+            color: #2cfbad;
+            padding: 9px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        button:hover {
+            background: #2cfbad;
+            color: #03140d;
+            box-shadow: 0 0 18px rgba(44, 251, 173, 0.8);
+            transform: scale(1.05);
+        }
+        button.active {
+            background: #2cfbad;
+            color: #03140d;
+            box-shadow: 0 0 18px rgba(44, 251, 173, 0.8);
+        }
+        #mouse-help {
+            position: absolute;
+            bottom: 30px;
+            right: 25px;
+            background: rgba(6, 18, 13, 0.8);
+            border: 1px solid rgba(44, 251, 173, 0.3);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 11px;
+            color: #92e0be;
+            line-height: 1.6;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+        }
+        .key {
+            color: #fff;
+            font-weight: bold;
+        }
+        #back-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            z-index: 10;
+            background: rgba(14, 30, 22, 0.9);
+            border: 1px solid #2cfbad;
+            color: #2cfbad;
+            padding: 8px 18px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        #back-btn:hover {
+            background: #2cfbad;
+            color: #03140d;
+        }
+    </style>
+    <!-- Bibliotecas Three.js e OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="ui-overlay">
+        <h1>GENERAL KAI 3D</h1>
+        <p>Three.js WebGL • Modelagem Procedural com Shaders PBR de Jade & Bronze</p>
+    </div>
+
+    <a href="index.html" id="back-btn">⬅ Voltar ao Jogo 2D</a>
+
+    <div id="controls-panel">
+        <button id="btn-idle" class="active" onclick="setAnimation('idle')">Respiração (Idle)</button>
+        <button id="btn-slash" onclick="setAnimation('slash')">Chicotada de Jade (Slash)</button>
+        <button id="btn-cyclone" onclick="setAnimation('cyclone')">Jade Cyclone 360°</button>
+    </div>
+
+    <div id="mouse-help">
+        <div><span class="key">Botão Esquerdo</span> : Girar Câmera 3D</div>
+        <div><span class="key">Scroll Mouse</span> : Zoom In / Out</div>
+        <div><span class="key">Botão Direito</span> : Pan / Mover Câmera</div>
+    </div>
+
+    <canvas id="webgl-canvas"></canvas>
+
+    <script>
+        /* --- CONFIGURAÇÃO DA CENA THREE.JS --- */
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030605, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 3.5, 9);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.05; // Não passar muito do chão
+        controls.minDistance = 3;
+        controls.maxDistance = 18;
+        controls.target.set(0, 2.2, 0);
+
+        /* --- ILUMINAÇÃO DINÂMICA 3D --- */
+        // Luz ambiente fraca
+        const ambientLight = new THREE.AmbientLight(0x06140e, 1.5);
+        scene.add(ambientLight);
+
+        // Luz de holofote superior (Spotlight)
+        const spotLight = new THREE.SpotLight(0xa7f3d0, 3.5);
+        spotLight.position.set(4, 12, 6);
+        spotLight.angle = Math.PI / 5;
+        spotLight.penumbra = 0.8;
+        spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 1024;
+        spotLight.shadow.mapSize.height = 1024;
+        scene.add(spotLight);
+
+        // Luz de contra-luz mística roxa (Rim Light)
+        const rimLight = new THREE.DirectionalLight(0xa855f7, 2.2);
+        rimLight.position.set(-6, 5, -8);
+        scene.add(rimLight);
+
+        // Luz esmeralda emanando do Kai
+        const kaiPointLight = new THREE.PointLight(0x2cfbad, 3.5, 8);
+        kaiPointLight.position.set(0, 2.5, 1.2);
+        scene.add(kaiPointLight);
+
+        /* --- MATERIAIS PBR DE JADE E BRONZE --- */
+        // Jade Translúcido Esmeralda
+        const jadeMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x1bf799,
+            emissive: 0x075432,
+            roughness: 0.15,
+            metalness: 0.1,
+            transmission: 0.7,
+            thickness: 1.2,
+            reflectivity: 0.9,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1
+        });
+
+        // Jade Incandescente (Fios de corte e olhos)
+        const glowingJadeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xa7f9d4,
+            emissive: 0x2cfbad,
+            emissiveIntensity: 2.2,
+            roughness: 0.2
+        });
+
+        // Bronze Antigo Envelhecido com Pátina
+        const bronzeArmorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3d3023,
+            roughness: 0.6,
+            metalness: 0.75
+        });
+
+        // Pele e Músculos do Búfalo
+        const yakSkinMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a18,
+            roughness: 0.85,
+            metalness: 0.05
+        });
+
+        // Chifres de Obsidiana
+        const hornMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0a0f0d,
+            roughness: 0.35,
+            metalness: 0.3
+        });
+
+        // Correntes de Ferro Espiritual
+        const chainMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2a3530,
+            roughness: 0.4,
+            metalness: 0.9
+        });
+
+        /* --- CENÁRIO: ALTAR CIRCULAR DE PEDRA DE JADE --- */
+        const altarGeo = new THREE.CylinderGeometry(4.5, 4.8, 0.4, 32);
+        const altarMat = new THREE.MeshStandardMaterial({
+            color: 0x111c16,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const altar = new THREE.Mesh(altarGeo, altarMat);
+        altar.position.y = -0.2;
+        altar.receiveShadow = true;
+        scene.add(altar);
+
+        // Anel de Runas de Jade no Chão
+        const runeRingGeo = new THREE.RingGeometry(3.6, 4.0, 32);
+        const runeRingMat = new THREE.MeshStandardMaterial({
+            color: 0x2cfbad,
+            emissive: 0x2cfbad,
+            emissiveIntensity: 0.8,
+            side: THREE.DoubleSide
+        });
+        const runeRing = new THREE.Mesh(runeRingGeo, runeRingMat);
+        runeRing.rotation.x = -Math.PI / 2;
+        runeRing.position.y = 0.01;
+        scene.add(runeRing);
+
+        /* --- CONSTRUÇÃO HIERÁRQUICA DO GENERAL KAI 3D --- */
+        const kaiGroup = new THREE.Group();
+        scene.add(kaiGroup);
+
+        // 1. Torso e Armadura Peitoral
+        const torsoGeo = new THREE.CylinderGeometry(0.85, 0.65, 1.5, 12);
+        const torso = new THREE.Mesh(torsoGeo, bronzeArmorMaterial);
+        torso.position.y = 2.4;
+        torso.castShadow = true;
+        kaiGroup.add(torso);
+
+        // Placas Peitorais
+        const chestPlateGeo = new THREE.BoxGeometry(0.9, 0.7, 0.5);
+        const chestPlate = new THREE.Mesh(chestPlateGeo, bronzeArmorMaterial);
+        chestPlate.position.set(0, 2.5, 0.45);
+        kaiGroup.add(chestPlate);
+
+        // 2. Cinto com Amuletos de Jade
+        const beltGeo = new THREE.CylinderGeometry(0.72, 0.72, 0.25, 16);
+        const belt = new THREE.Mesh(beltGeo, hornMaterial);
+        belt.position.y = 1.65;
+        kaiGroup.add(belt);
+
+        const amuletsGroup = new THREE.Group();
+        for (let i = -2; i <= 2; i++) {
+            const amuletGeo = new THREE.BoxGeometry(0.12, 0.22, 0.08);
+            const amulet = new THREE.Mesh(amuletGeo, glowingJadeMaterial);
+            const angle = (i * 0.3);
+            amulet.position.set(Math.sin(angle) * 0.78, 1.5, Math.cos(angle) * 0.78);
+            amulet.rotation.y = angle;
+            amuletsGroup.add(amulet);
+        }
+        kaiGroup.add(amuletsGroup);
+
+        // 3. Cabeça de Búfalo e Focinho
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 3.3, 0.2);
+
+        const headGeo = new THREE.BoxGeometry(0.8, 0.75, 0.9);
+        const head = new THREE.Mesh(headGeo, yakSkinMaterial);
+        head.castShadow = true;
+        headGroup.add(head);
+
+        const snoutGeo = new THREE.BoxGeometry(0.65, 0.45, 0.5);
+        const snout = new THREE.Mesh(snoutGeo, yakSkinMaterial);
+        snout.position.set(0, -0.15, 0.55);
+        headGroup.add(snout);
+
+        // Olhos de Chi Esmeralda Reluzentes
+        const eyeGeo = new THREE.BoxGeometry(0.14, 0.07, 0.07);
+        const leftEye = new THREE.Mesh(eyeGeo, glowingJadeMaterial);
+        leftEye.position.set(-0.25, 0.08, 0.52);
+        const rightEye = new THREE.Mesh(eyeGeo, glowingJadeMaterial);
+        rightEye.position.set(0.25, 0.08, 0.52);
+        headGroup.add(leftEye);
+        headGroup.add(rightEye);
+
+        // Chifres Majestosos Curvados com Pontas de Jade
+        function createHorn(isRight) {
+            const horn = new THREE.Group();
+            const segments = 12;
+            let currentP = new THREE.Vector3(0, 0, 0);
+            let prevMesh = null;
+
+            for (let i = 0; i < segments; i++) {
+                const t = i / segments;
+                const radius = 0.18 * (1 - t * 0.75);
+                const segLen = 0.22;
+                const segGeo = new THREE.CylinderGeometry(radius * 0.85, radius, segLen, 8);
+                // Ponta de jade nos últimos 30%
+                const segMat = (t > 0.65) ? glowingJadeMaterial : hornMaterial;
+                const segMesh = new THREE.Mesh(segGeo, segMat);
+                segMesh.castShadow = true;
+
+                segMesh.position.y = segLen / 2;
+                const node = new THREE.Group();
+                node.position.copy(currentP);
+
+                // Curvatura imponente para fora, para trás e para cima
+                const curveX = (isRight ? 1 : -1) * 0.14;
+                const curveY = 0.12;
+                const curveZ = -0.05 + t * 0.08;
+                node.rotation.z = (isRight ? -1 : 1) * (0.2 + t * 0.15);
+                node.rotation.x = -0.15 + t * 0.25;
+
+                node.add(segMesh);
+                horn.add(node);
+
+                currentP.add(new THREE.Vector3(curveX, curveY, curveZ));
+            }
+            return horn;
+        }
+
+        const leftHorn = createHorn(false);
+        leftHorn.position.set(-0.4, 0.35, 0);
+        headGroup.add(leftHorn);
+
+        const rightHorn = createHorn(true);
+        rightHorn.position.set(0.4, 0.35, 0);
+        headGroup.add(rightHorn);
+
+        kaiGroup.add(headGroup);
+
+        // 4. Pernas Robustas
+        const legGeo = new THREE.CylinderGeometry(0.28, 0.22, 1.4, 10);
+        const leftLeg = new THREE.Mesh(legGeo, yakSkinMaterial);
+        leftLeg.position.set(-0.45, 0.75, 0);
+        leftLeg.castShadow = true;
+        kaiGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(legGeo, yakSkinMaterial);
+        rightLeg.position.set(0.45, 0.75, 0);
+        rightLeg.castShadow = true;
+        kaiGroup.add(rightLeg);
+
+        // 5. Braços e Ombreiras com Espinhos
+        const shoulderGeo = new THREE.SphereGeometry(0.45, 8, 8);
+        const leftShoulder = new THREE.Mesh(shoulderGeo, bronzeArmorMaterial);
+        leftShoulder.position.set(-1.15, 2.8, 0);
+        kaiGroup.add(leftShoulder);
+
+        const rightShoulder = new THREE.Mesh(shoulderGeo, bronzeArmorMaterial);
+        rightShoulder.position.set(1.15, 2.8, 0);
+        kaiGroup.add(rightShoulder);
+
+        // Braço Esquerdo (Grupo para animação)
+        const leftArmGroup = new THREE.Group();
+        leftArmGroup.position.set(-1.15, 2.8, 0);
+        const armGeo = new THREE.CylinderGeometry(0.22, 0.2, 1.2, 8);
+        const leftArmMesh = new THREE.Mesh(armGeo, yakSkinMaterial);
+        leftArmMesh.position.y = -0.6;
+        leftArmGroup.add(leftArmMesh);
+        kaiGroup.add(leftArmGroup);
+
+        // Braço Direito (Grupo para animação)
+        const rightArmGroup = new THREE.Group();
+        rightArmGroup.position.set(1.15, 2.8, 0);
+        const rightArmMesh = new THREE.Mesh(armGeo, yakSkinMaterial);
+        rightArmMesh.position.y = -0.6;
+        rightArmGroup.add(rightArmMesh);
+        kaiGroup.add(rightArmGroup);
+
+        // 6. Lâminas de Jade Gêmeas (Cutelos de Jade)
+        function createJadeBlade() {
+            const bladeGroup = new THREE.Group();
+            // Cabo de bronze com detalhes
+            const handleGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8);
+            const handle = new THREE.Mesh(handleGeo, bronzeArmorMaterial);
+            bladeGroup.add(handle);
+
+            // Lâmina curva maciça de jade translúcido
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 0);
+            shape.lineTo(0.55, 0.15);
+            shape.lineTo(0.85, 1.2);
+            shape.lineTo(0.1, 1.45);
+            shape.lineTo(-0.1, 0.1);
+            shape.closePath();
+
+            const extrudeSettings = { depth: 0.08, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.03, bevelThickness: 0.03 };
+            const bladeGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const blade = new THREE.Mesh(bladeGeo, jadeMaterial);
+            blade.position.set(0, 0.25, -0.04);
+            blade.castShadow = true;
+            bladeGroup.add(blade);
+
+            // Borda de corte afiada luminosa
+            const edgeGeo = new THREE.BoxGeometry(0.06, 1.3, 0.06);
+            const edge = new THREE.Mesh(edgeGeo, glowingJadeMaterial);
+            edge.position.set(0.65, 0.85, 0);
+            edge.rotation.z = -0.15;
+            bladeGroup.add(edge);
+
+            return bladeGroup;
+        }
+
+        const leftBlade = createJadeBlade();
+        leftBlade.position.set(0, -1.2, 0.3);
+        leftBlade.rotation.x = Math.PI / 4;
+        leftArmGroup.add(leftBlade);
+
+        const rightBlade = createJadeBlade();
+        rightBlade.position.set(0, -1.2, 0.3);
+        rightBlade.rotation.x = Math.PI / 4;
+        rightArmGroup.add(rightBlade);
+
+        // 7. Correntes 3D com Elos Múltiplos
+        const leftChainLinks = [];
+        const rightChainLinks = [];
+        const linkGeo = new THREE.TorusGeometry(0.1, 0.035, 6, 8);
+
+        function createChain(parentGroup, linksArray, count = 12) {
+            for (let i = 0; i < count; i++) {
+                const link = new THREE.Mesh(linkGeo, chainMaterial);
+                parentGroup.add(link);
+                linksArray.push(link);
+            }
+        }
+        createChain(leftArmGroup, leftChainLinks);
+        createChain(rightArmGroup, rightChainLinks);
+
+        // 8. Partículas Tridimensionais de Chi Verde
+        const particleCount = 180;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePos = new Float32Array(particleCount * 3);
+        const particleVels = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            particlePos[i * 3] = (Math.random() - 0.5) * 8;
+            particlePos[i * 3 + 1] = Math.random() * 6;
+            particlePos[i * 3 + 2] = (Math.random() - 0.5) * 8;
+            particleVels.push({
+                x: (Math.random() - 0.5) * 0.015,
+                y: Math.random() * 0.02 + 0.01,
+                z: (Math.random() - 0.5) * 0.015
+            });
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x2cfbad,
+            size: 0.12,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending
+        });
+        const chiParticles = new THREE.Points(particleGeo, particleMat);
+        scene.add(chiParticles);
+
+        /* --- SISTEMA DE ANIMAÇÕES INTERATIVAS --- */
+        let currentAnim = 'idle';
+        let animClock = 0;
+
+        function setAnimation(animName) {
+            currentAnim = animName;
+            animClock = 0;
+            document.querySelectorAll('#controls-panel button').forEach(b => b.classList.remove('active'));
+            if (animName === 'idle') document.getElementById('btn-idle').classList.add('active');
+            if (animName === 'slash') document.getElementById('btn-slash').classList.add('active');
+            if (animName === 'cyclone') document.getElementById('btn-cyclone').classList.add('active');
+        }
+
+        /* --- LOOP PRINCIPAL DE RENDERIZAÇÃO --- */
+        function animate() {
+            requestAnimationFrame(animate);
+            animClock += 0.04;
+
+            // Rotação sutil do anel de runas
+            runeRing.rotation.z += 0.005;
+
+            // Animação das Partículas de Chi em 3D
+            const posAttr = chiParticles.geometry.attributes.position;
+            for (let i = 0; i < particleCount; i++) {
+                posAttr.array[i * 3] += particleVels[i].x;
+                posAttr.array[i * 3 + 1] += particleVels[i].y;
+                posAttr.array[i * 3 + 2] += particleVels[i].z;
+
+                if (posAttr.array[i * 3 + 1] > 6.5) {
+                    posAttr.array[i * 3 + 1] = 0.1;
+                    posAttr.array[i * 3] = (Math.random() - 0.5) * 8;
+                    posAttr.array[i * 3 + 2] = (Math.random() - 0.5) * 8;
+                }
+            }
+            posAttr.needsUpdate = true;
+
+            // Luz pulsante de Chi
+            kaiPointLight.intensity = 3.2 + Math.sin(animClock * 3) * 1.2;
+
+            // MÁQUINA DE ANIMAÇÕES DO GENERAL KAI
+            if (currentAnim === 'idle') {
+                // Respiração profunda e intimidante
+                const breath = Math.sin(animClock * 1.8);
+                torso.scale.set(1 + breath * 0.03, 1 + breath * 0.02, 1 + breath * 0.03);
+                headGroup.position.y = 3.3 + breath * 0.04;
+                headGroup.rotation.x = breath * 0.03;
+
+                // Balanço suave dos braços e lâminas
+                leftArmGroup.rotation.x = Math.sin(animClock * 1.8) * 0.1;
+                leftArmGroup.rotation.z = -0.15;
+                rightArmGroup.rotation.x = Math.cos(animClock * 1.8) * 0.1;
+                rightArmGroup.rotation.z = 0.15;
+
+                kaiGroup.rotation.y = Math.sin(animClock * 0.6) * 0.1;
+
+                // Correntes caídas suavemente
+                for (let i = 0; i < leftChainLinks.length; i++) {
+                    const link = leftChainLinks[i];
+                    link.position.set(-0.2, -0.3 - i * 0.09, Math.sin(animClock * 2 + i * 0.4) * 0.06);
+                    link.rotation.y = (i % 2 === 0 ? 0 : Math.PI / 2);
+                }
+                for (let i = 0; i < rightChainLinks.length; i++) {
+                    const link = rightChainLinks[i];
+                    link.position.set(0.2, -0.3 - i * 0.09, Math.cos(animClock * 2 + i * 0.4) * 0.06);
+                    link.rotation.y = (i % 2 === 0 ? 0 : Math.PI / 2);
+                }
+
+            } else if (currentAnim === 'slash') {
+                // Golpe chicoteado para frente com a lâmina direita
+                const slashProgress = (Math.sin(animClock * 3.5) + 1) / 2; // 0 a 1
+                rightArmGroup.rotation.x = -1.2 + slashProgress * 2.5;
+                rightArmGroup.rotation.y = -0.4 + slashProgress * 0.8;
+                rightBlade.position.z = 0.3 + slashProgress * 1.6; // Lâmina é arremessada
+
+                leftArmGroup.rotation.x = 0.5 - slashProgress * 0.8; // Braço esquerdo recua
+                headGroup.rotation.y = -0.2 + slashProgress * 0.4;
+
+                // Corrente esticada na chicotada
+                for (let i = 0; i < rightChainLinks.length; i++) {
+                    const t = i / rightChainLinks.length;
+                    const link = rightChainLinks[i];
+                    link.position.set(0.2, -0.6 - t * 0.4, t * (rightBlade.position.z));
+                    link.rotation.x = Math.PI / 4;
+                }
+
+            } else if (currentAnim === 'cyclone') {
+                // Jade Cyclone: Giro de 360° em alta velocidade
+                kaiGroup.rotation.y += 0.22; // Giro ultra veloz
+
+                leftArmGroup.rotation.x = 0;
+                leftArmGroup.rotation.z = -1.5; // Braços 100% esticados para fora
+                rightArmGroup.rotation.x = 0;
+                rightArmGroup.rotation.z = 1.5;
+
+                leftBlade.position.set(-1.2, -0.6, 0);
+                rightBlade.position.set(1.2, -0.6, 0);
+
+                // Correntes esticadas pela força centrífuga
+                for (let i = 0; i < leftChainLinks.length; i++) {
+                    const link = leftChainLinks[i];
+                    link.position.set(-i * 0.11, -0.6, 0);
+                }
+                for (let i = 0; i < rightChainLinks.length; i++) {
+                    const link = rightChainLinks[i];
+                    link.position.set(i * 0.11, -0.6, 0);
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        /* --- REDIMENSIONAMENTO DE JANELA --- */
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
