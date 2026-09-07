@@ -24,7 +24,7 @@
         }
         #game-container {
             position: relative;
-            box-shadow: 0 0 70px rgba(18, 245, 155, 0.35), 0 0 130px rgba(0, 0, 0, 0.98);
+            box-shadow: 0 0 70px rgba(18, 245, 155, 0.35), 0 0 140px rgba(0, 0, 0, 0.98);
             border: 2px solid rgba(44, 251, 173, 0.5);
             border-radius: 12px;
             overflow: hidden;
@@ -110,12 +110,11 @@
             opacity: 0.35;
             transform: skewX(-20deg) scale(0.9);
         }
-        /* Amuleto Ativo de Jombie */
         .amulet-slot {
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(8, 26, 18, 0.8);
+            background: rgba(8, 26, 18, 0.85);
             border: 1.5px solid #2cfbad;
             border-radius: 6px;
             padding: 5px 12px;
@@ -139,14 +138,13 @@
             color: #b1ffdb;
             letter-spacing: 1px;
         }
-        /* Minimapa Metroidvania */
         #minimap-container {
             position: absolute;
             top: 20px;
             right: 25px;
             width: 140px;
             height: 90px;
-            background: rgba(3, 10, 7, 0.85);
+            background: rgba(3, 10, 7, 0.88);
             border: 2px solid rgba(44, 251, 173, 0.4);
             border-radius: 8px;
             overflow: hidden;
@@ -356,7 +354,6 @@
     <div id="game-container">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-        <!-- HUD: Vida, Chi e Amuleto de Jombie -->
         <div id="hud">
             <div class="chi-orb">
                 <div class="chi-fill" id="chi-fill"></div>
@@ -375,20 +372,16 @@
             </div>
         </div>
 
-        <!-- Minimapa Metroidvania -->
         <div id="minimap-container">
             <canvas id="minimapCanvas" width="140" height="90"></canvas>
         </div>
 
-        <!-- Controles -->
         <div id="controls-legend">
-            <div><span class="key">A</span> / <span class="key">D</span> : Mover | <span class="key">Espaço</span> : Pulo variável & Wall Jump</div>
+            <div><span class="key">A</span> / <span class="key">D</span> : Movimento não-linear (Skid & Lean) | <span class="key">Espaço</span> : Pulo variável (Apex Float)</div>
             <div><span class="key">Shift</span> : Chi Dash | <span class="key">Z</span> / <span class="key">Click Esq</span> : Chicote (Dir/Cima/Pogo)</div>
-            <div><span class="key">X</span> : Jade Cyclone | <span class="key">C</span> : Grapple | <span class="key">F</span> : Curar Chi</div>
-            <div><span class="key">E</span> : Invocar Jombie (Amuleto)</div>
+            <div><span class="key">X</span> : Jade Cyclone | <span class="key">C</span> : Grapple | <span class="key">F</span> : Curar Chi | <span class="key">E</span> : Jombie</div>
         </div>
 
-        <!-- Barra do Boss -->
         <div id="boss-hud">
             <div class="boss-name">Bao-Zhi, O Eremita da Praga Óssea</div>
             <div class="boss-bar-bg">
@@ -396,7 +389,6 @@
             </div>
         </div>
 
-        <!-- Notificação de Vitória -->
         <div id="popup-message">
             <h2 id="popup-title">AMULETO DE BAO-ZHI CONQUISTADO!</h2>
             <p id="popup-desc">Você absorveu a alma de Bao-Zhi. Agora você pode pressionar <strong>[E]</strong> para invocar um <em>Guerreiro Jombie de Peste</em> para lutar com você!</p>
@@ -406,7 +398,6 @@
         <button id="art-viewer-btn" onclick="openArtModal()">Galeria de Artes HD</button>
     </div>
 
-    <!-- Modal de Artes -->
     <div id="modal-art">
         <div class="modal-content">
             <button class="close-modal" onclick="closeArtModal()">FECHAR ✕</button>
@@ -424,7 +415,7 @@
     </div>
 
     <script>
-        /* --- CARREGAMENTO DE ASSETS --- */
+        /* --- ASSETS GRÁFICOS --- */
         const assets = {
             bg: new Image(),
             tile: new Image(),
@@ -438,9 +429,8 @@
         assets.kai.src = 'sprite_kai.png';
         assets.baozhi.src = 'sprite_baozhi.png';
 
-        /* --- SÍNTESE DE ÁUDIO PROCEDURAL E BGM AMBIENTE --- */
+        /* --- SÍNTESE DE ÁUDIO PROCEDURAL --- */
         let audioCtx = null;
-        let bgmOsc = null;
         let isBgmPlaying = false;
 
         function initAudio() {
@@ -453,8 +443,7 @@
         function startAmbientBGM() {
             if (isBgmPlaying || !audioCtx) return;
             isBgmPlaying = true;
-            // Duto de ambientação sutil e misteriosa (nota pedal profunda estilo Hollow Knight)
-            const rootFreqs = [55, 65.4, 73.4, 82.4]; // Notas graves místicas
+            const rootFreqs = [55, 65.4, 73.4, 82.4];
             let noteIdx = 0;
             
             function playDrone() {
@@ -573,16 +562,27 @@
                 gain.connect(audioCtx.destination);
                 osc.start(now);
                 osc.stop(now + 0.3);
+            } else if (type === 'skid') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(90, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.1);
             }
         }
 
-        /* --- CONFIGURAÇÃO DO CANVAS E CÂMERA METROIDVANIA --- */
+        /* --- CONFIGURAÇÃO DO CANVAS E CÂMERA --- */
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const miniCanvas = document.getElementById('minimapCanvas');
         const miniCtx = miniCanvas.getContext('2d');
 
-        // Dimensões do Mundo Expandido (3 salas horizontais de 1280px x 1000px de altura)
         const WORLD = {
             width: 3840,
             height: 1080
@@ -620,7 +620,7 @@
         });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-        /* --- GAME FEEL: HIT-STOP & SCREEN SHAKE --- */
+        /* --- GAME FEEL & VFX --- */
         let hitStopFrames = 0;
         let screenShake = 0;
         const particles = [];
@@ -646,25 +646,21 @@
             });
         }
 
-        /* --- PLATAFORMAS DO MUNDO METROIDVANIA --- */
+        /* --- PLATAFORMAS DO MUNDO --- */
         const platforms = [
-            // Setor 1: Santuário Ancestral de Kai (x: 0 a 1280)
             { x: 0, y: 920, w: 1300, h: 160, type: 'ground' },
             { x: 220, y: 760, w: 220, h: 30, type: 'stone' },
             { x: 550, y: 640, w: 260, h: 30, type: 'stone' },
             { x: 880, y: 520, w: 200, h: 30, type: 'stone' },
             { x: 300, y: 440, w: 240, h: 30, type: 'stone' },
 
-            // Setor 2: Caverna dos Monges e Abismo de Espinhos (x: 1280 a 2400)
             { x: 1300, y: 920, w: 320, h: 160, type: 'ground' },
-            // Abismo com espinhos no meio (x: 1620 a 1980)
             { x: 1980, y: 920, w: 580, h: 160, type: 'ground' },
             { x: 1450, y: 750, w: 180, h: 30, type: 'stone' },
-            { x: 1720, y: 620, w: 160, h: 30, type: 'stone' }, // Plataforma suspensa sobre abismo
+            { x: 1720, y: 620, w: 160, h: 30, type: 'stone' },
             { x: 2000, y: 740, w: 220, h: 30, type: 'stone' },
             { x: 2250, y: 580, w: 260, h: 30, type: 'stone' },
 
-            // Setor 3: Arena de Bao-Zhi (x: 2560 a 3840)
             { x: 2560, y: 920, w: 1280, h: 160, type: 'ground' },
             { x: 2750, y: 760, w: 240, h: 30, type: 'stone' },
             { x: 3420, y: 760, w: 240, h: 30, type: 'stone' },
@@ -672,16 +668,14 @@
             { x: 2680, y: 520, w: 200, h: 30, type: 'stone' },
             { x: 3560, y: 520, w: 200, h: 30, type: 'stone' },
 
-            // Paredes limites do mundo
             { x: 0, y: 0, w: 35, h: 1080, type: 'wall' },
             { x: 3805, y: 0, w: 35, h: 1080, type: 'wall' }
         ];
 
-        // Anéis de Grapple
         const grapplePoints = [
             { x: 420, y: 350, pulse: 0, active: false },
             { x: 1000, y: 400, pulse: 0, active: false },
-            { x: 1620, y: 480, pulse: 0, active: false }, // Atravessar abismo
+            { x: 1620, y: 480, pulse: 0, active: false },
             { x: 1860, y: 480, pulse: 0, active: false },
             { x: 2400, y: 450, pulse: 0, active: false },
             { x: 2900, y: 420, pulse: 0, active: false },
@@ -689,7 +683,6 @@
             { x: 3500, y: 420, pulse: 0, active: false }
         ];
 
-        // Altar / Estátua de Descanso (Bancada de Hollow Knight)
         const saveShrine = {
             x: 180,
             y: 840,
@@ -698,19 +691,16 @@
             glow: 0
         };
 
-        /* --- BESTIÁRIO: INIMIGOS COMUNS --- */
         const enemies = [
-            // Soldados de Terracota (Terrestres)
             { x: 700, y: 840, w: 50, h: 75, vx: -1.5, minX: 550, maxX: 1100, hp: 45, maxHp: 45, type: 'terracotta', flash: 0 },
             { x: 1400, y: 840, w: 50, h: 75, vx: 1.5, minX: 1320, maxX: 1580, hp: 45, maxHp: 45, type: 'terracotta', flash: 0 },
             { x: 2150, y: 840, w: 50, h: 75, vx: -1.5, minX: 2020, maxX: 2450, hp: 45, maxHp: 45, type: 'terracotta', flash: 0 },
-            // Espíritos da Peste Voadores
             { x: 920, y: 450, w: 42, h: 42, vx: 0, vy: 0, baseY: 450, timer: 0, hp: 25, maxHp: 25, type: 'specter', flash: 0 },
             { x: 1720, y: 420, w: 42, h: 42, vx: 0, vy: 0, baseY: 420, timer: 0, hp: 25, maxHp: 25, type: 'specter', flash: 0 },
             { x: 2350, y: 460, w: 42, h: 42, vx: 0, vy: 0, baseY: 460, timer: 0, hp: 25, maxHp: 25, type: 'specter', flash: 0 }
         ];
 
-        /* --- PROTAGONISTA: GENERAL KAI --- */
+        /* --- PROTAGONISTA: GENERAL KAI (COM FÍSICA CINEMÁTICA NÃO-LINEAR) --- */
         const kai = {
             x: 120,
             y: 830,
@@ -718,13 +708,22 @@
             h: 88,
             vx: 0,
             vy: 0,
-            speed: 6.2,
+            maxSpeed: 6.6,
+            accelGround: 0.18, // Curva suave lerp
+            accelAir: 0.11,
+            friction: 0.84,
             facing: 1,
             grounded: false,
             onWall: 0,
             coyoteTime: 0,
             jumpBuffer: 0,
             animTimer: 0,
+            walkTimer: 0,
+            stepDustTimer: 0,
+            leanAngle: 0,
+            targetLean: 0,
+            capeWave: 0,
+            skidFrames: 0,
             squashY: 1,
             squashX: 1,
             
@@ -735,7 +734,7 @@
             maxChi: 100,
             hasBaoZhiAmulet: false,
             
-            // Ações & Timers
+            // Ações
             dashCooldown: 0,
             isDashing: 0,
             attackTimer: 0,
@@ -749,7 +748,6 @@
             grappleTarget: null
         };
 
-        /* --- CHEFE 1: BAO-ZHI --- */
         const baozhi = {
             x: 3200,
             y: 650,
@@ -774,7 +772,6 @@
 
         const bossProjectiles = [];
 
-        /* --- PARTICULAS AMBIENTAIS DE CHI --- */
         const ambientMotes = [];
         for (let i = 0; i < 60; i++) {
             ambientMotes.push({
@@ -787,7 +784,16 @@
             });
         }
 
-        /* --- ATUALIZAÇÃO DO HUD & MINIMAPA --- */
+        // Raios de Luz Espiritual (God Rays)
+        const godRays = [
+            { x: 380, width: 90, angle: 0.22, alpha: 0.12 },
+            { x: 1050, width: 110, angle: 0.18, alpha: 0.14 },
+            { x: 1800, width: 130, angle: -0.15, alpha: 0.15 },
+            { x: 2850, width: 100, angle: 0.20, alpha: 0.13 },
+            { x: 3400, width: 120, angle: -0.22, alpha: 0.16 }
+        ];
+
+        /* --- HUD & MINIMAPA --- */
         function updateHUD() {
             const shardsContainer = document.getElementById('shards-container');
             shardsContainer.innerHTML = '';
@@ -821,23 +827,19 @@
             const scaleX = miniCanvas.width / WORLD.width;
             const scaleY = miniCanvas.height / WORLD.height;
 
-            // Desenhar plataformas no mapa
             miniCtx.fillStyle = '#1e5e41';
             for (let p of platforms) {
                 miniCtx.fillRect(p.x * scaleX, p.y * scaleY, Math.max(2, p.w * scaleX), Math.max(2, p.h * scaleY));
             }
 
-            // Posição de Bao-Zhi
             if (baozhi.hp > 0) {
                 miniCtx.fillStyle = '#d946ef';
                 miniCtx.fillRect(baozhi.x * scaleX, baozhi.y * scaleY, 6, 6);
             }
 
-            // Posição do Altar de Save
             miniCtx.fillStyle = '#facc15';
             miniCtx.fillRect(saveShrine.x * scaleX, saveShrine.y * scaleY, 5, 5);
 
-            // Posição de Kai (Ponto Verde Brilhante)
             miniCtx.fillStyle = '#2cfbad';
             miniCtx.shadowColor = '#2cfbad';
             miniCtx.shadowBlur = 6;
@@ -845,7 +847,7 @@
             miniCtx.shadowBlur = 0;
         }
 
-        /* --- FÍSICA E LOOP PRINCIPAL METROIDVANIA --- */
+        /* --- FÍSICA NÃO-LINEAR E ANIMAÇÃO PROCEDURAL --- */
         function update() {
             if (hitStopFrames > 0) {
                 hitStopFrames--;
@@ -856,9 +858,12 @@
             if (screenShake < 0.2) screenShake = 0;
 
             kai.animTimer += 0.08;
-            kai.squashX += (1 - kai.squashX) * 0.2;
-            kai.squashY += (1 - kai.squashY) * 0.2;
+            kai.squashX += (1 - kai.squashX) * 0.18;
+            kai.squashY += (1 - kai.squashY) * 0.18;
             saveShrine.glow += 0.04;
+
+            // Movimento secundário: Capa ondulando com atraso inercial
+            kai.capeWave += 0.12 + Math.abs(kai.vx) * 0.04;
 
             // Poeira de Chi
             for (let m of ambientMotes) {
@@ -872,19 +877,18 @@
 
             for (let gp of grapplePoints) gp.pulse += 0.05;
 
-            // CÂMERA DINÂMICA (LOOKAHEAD & SMOOTH FOLLOW)
-            camera.lookahead += ((kai.facing * 140) - camera.lookahead) * 0.05;
+            // CÂMERA DINÂMICA SUAVE COM LOOKAHEAD
+            camera.lookahead += ((kai.facing * 150) - camera.lookahead) * 0.06;
             camera.targetX = (kai.x + kai.w / 2 + camera.lookahead) - canvas.width / 2;
             camera.targetY = (kai.y + kai.h / 2) - canvas.height / 2;
 
-            // Limites da Câmera no Mundo
             camera.targetX = Math.max(0, Math.min(WORLD.width - canvas.width, camera.targetX));
             camera.targetY = Math.max(0, Math.min(WORLD.height - canvas.height, camera.targetY));
 
             camera.x += (camera.targetX - camera.x) * camera.followSpeed;
             camera.y += (camera.targetY - camera.y) * camera.followSpeed;
 
-            // 1. INPUTS KAI
+            // 1. INPUTS
             const moveLeft = keys['a'] || keys['arrowleft'];
             const moveRight = keys['d'] || keys['arrowright'];
             const jumpKey = keys[' '] || keys['w'] || keys['arrowup'];
@@ -899,7 +903,7 @@
             if (kai.attackTimer > 0) kai.attackTimer--;
             if (kai.cycloneTimer > 0) kai.cycloneTimer--;
 
-            // Invocar Jombie de Peste com Amuleto
+            // Invocar Jombie
             if (jombieKey && kai.hasBaoZhiAmulet && kai.chi >= 30 && jombies.length < 2) {
                 kai.chi -= 30;
                 playSound('jombie');
@@ -920,7 +924,7 @@
                 }
             }
 
-            // Santuário de Save / Descanso
+            // Altar de Descanso
             const distShrine = Math.hypot((kai.x + kai.w/2) - (saveShrine.x + saveShrine.w/2), (kai.y + kai.h/2) - (saveShrine.y + saveShrine.h/2));
             if (distShrine < 70) {
                 if (kai.hp < kai.maxHp || kai.chi < kai.maxChi) {
@@ -934,10 +938,10 @@
                 }
             }
 
-            // Foco de Chi (Cura manual)
+            // Foco de Chi
             if (healKey && kai.grounded && kai.chi >= 30 && kai.hp < kai.maxHp) {
                 kai.healChannel++;
-                kai.vx *= 0.4;
+                kai.vx *= 0.35;
                 addParticle(kai.x + kai.w/2 + (Math.random()-0.5)*45, kai.y + kai.h - Math.random()*50, 0, -2.5, '#2cfbad', 4, 30);
                 if (kai.healChannel >= 46) {
                     kai.chi -= 30;
@@ -953,15 +957,15 @@
                 kai.healChannel = 0;
             }
 
-            // Chi Dash com Sombras
+            // Chi Dash
             if (dashKey && kai.dashCooldown === 0 && !kai.isDashing && kai.chi >= 5) {
                 kai.isDashing = 14;
                 kai.dashCooldown = 36;
                 kai.chi -= 5;
                 kai.vy = 0;
-                kai.vx = kai.facing * 17.5;
-                kai.squashX = 1.4;
-                kai.squashY = 0.7;
+                kai.vx = kai.facing * 18;
+                kai.squashX = 1.45;
+                kai.squashY = 0.68;
                 playSound('whip');
                 triggerHitStop(2);
 
@@ -983,61 +987,111 @@
                     });
                 }
             } else if (!kai.grappleActive) {
-                if (moveLeft) {
-                    kai.vx = -kai.speed;
-                    kai.facing = -1;
-                } else if (moveRight) {
-                    kai.vx = kai.speed;
-                    kai.facing = 1;
-                } else {
-                    kai.vx *= 0.82;
-                    if (Math.abs(kai.vx) < 0.2) kai.vx = 0;
+                // FÍSICA DE MOVIMENTO COM ACELERAÇÃO NÃO-LINEAR & SKID
+                let targetVx = 0;
+                if (moveLeft) targetVx = -kai.maxSpeed;
+                else if (moveRight) targetVx = kai.maxSpeed;
+
+                const accel = kai.grounded ? kai.accelGround : kai.accelAir;
+                const prevVx = kai.vx;
+
+                // Interpolação não-linear suave
+                kai.vx += (targetVx - kai.vx) * accel;
+
+                // Efeito Skid (Derrapagem na troca de sentido)
+                if (kai.grounded && Math.sign(targetVx) !== 0 && Math.sign(prevVx) !== 0 && Math.sign(targetVx) !== Math.sign(prevVx) && Math.abs(prevVx) > 3) {
+                    kai.skidFrames = 5;
+                    playSound('skid');
+                    for (let i = 0; i < 6; i++) {
+                        addParticle(kai.x + (targetVx > 0 ? 0 : kai.w), kai.y + kai.h - 4, -targetVx * 0.4 + (Math.random()-0.5)*2, -Math.random()*2, '#a7f3d0', 4, 15);
+                    }
                 }
 
-                // Gravidade com Apex Float (gravidade mais suave no ápice do salto)
-                if (Math.abs(kai.vy) < 2.0 && !kai.grounded) {
-                    kai.vy += 0.38; // Flutuação no ápice
-                } else {
-                    kai.vy += 0.68;
-                }
-                if (kai.vy > 15) kai.vy = 15;
+                if (kai.skidFrames > 0) kai.skidFrames--;
 
-                // Deslize na parede
+                // Atualizar direção (facing)
+                if (targetVx !== 0) {
+                    kai.facing = targetVx > 0 ? 1 : -1;
+                    kai.walkTimer += 0.22;
+
+                    // Poeira rítmica de passos
+                    if (kai.grounded) {
+                        kai.stepDustTimer++;
+                        if (kai.stepDustTimer >= 14) {
+                            kai.stepDustTimer = 0;
+                            addParticle(kai.x + (kai.facing === 1 ? 8 : kai.w - 8), kai.y + kai.h - 2, -kai.facing * 1.5, -0.8, '#a7f3d0', 3, 12);
+                        }
+                    }
+                } else {
+                    kai.walkTimer = 0;
+                    kai.vx *= kai.friction;
+                    if (Math.abs(kai.vx) < 0.15) kai.vx = 0;
+                }
+
+                // Inclinação do Torso (Lean Angle)
+                kai.targetLean = (kai.vx / kai.maxSpeed) * 0.16; // Até ~10 graus
+                kai.leanAngle += (kai.targetLean - kai.leanAngle) * 0.2;
+
+                // GRAVIDADE ASSIMÉTRICA COM APEX HANG TIME & FAST FALL
+                if (!kai.grounded) {
+                    if (Math.abs(kai.vy) < 2.0) {
+                        // Ápice do pulo: flutuação suave para controle máximo
+                        kai.vy += 0.32;
+                    } else if (kai.vy > 0) {
+                        // Descida: mais rápida e pesada (Fast Fall)
+                        kai.vy += 0.92;
+                    } else {
+                        // Subida normal
+                        kai.vy += 0.65;
+                    }
+                }
+                if (kai.vy > 16) kai.vy = 16;
+
+                // Wall Slide com Chuva de Faíscas
                 if (kai.onWall !== 0 && !kai.grounded && kai.vy > 0) {
                     kai.vy = Math.min(kai.vy, 2.2);
-                    addParticle(kai.onWall === -1 ? kai.x : kai.x + kai.w, kai.y + kai.h*0.75, 0, -1.2, '#2cfbad', 3, 12);
+                    const wallX = kai.onWall === -1 ? kai.x : kai.x + kai.w;
+                    // Faíscas esmeralda
+                    addParticle(wallX, kai.y + kai.h * 0.7, -kai.onWall * (Math.random()*3 + 1), Math.random()*2 - 1, '#2cfbad', 3.5, 14);
+                    addParticle(wallX, kai.y + kai.h * 0.7, -kai.onWall * Math.random()*2, -Math.random()*2, '#ffffff', 2.5, 10);
                 }
 
-                // Salto Variável (soltar o botão reduz a subida)
-                if (jumpKey) {
+                // Buffer de Pulo
+                if (jumpKey) kai.jumpBuffer = 8;
+                if (kai.jumpBuffer > 0) kai.jumpBuffer--;
+
+                // Salto Variável com tolerância
+                if (kai.jumpBuffer > 0) {
                     if (kai.coyoteTime > 0) {
-                        kai.vy = -14.2;
+                        kai.vy = -14.4;
                         kai.coyoteTime = 0;
-                        kai.squashX = 0.75;
-                        kai.squashY = 1.35;
+                        kai.jumpBuffer = 0;
+                        kai.squashX = 0.72;
+                        kai.squashY = 1.38;
                         playSound('jump');
                         for (let i = 0; i < 10; i++) {
                             addParticle(kai.x + kai.w/2, kai.y + kai.h, (Math.random()-0.5)*6, -Math.random()*3, '#2cfbad', 4, 15);
                         }
                     } else if (kai.onWall !== 0) {
-                        kai.vy = -13;
-                        kai.vx = -kai.onWall * 10;
+                        kai.vy = -13.2;
+                        kai.vx = -kai.onWall * 10.5;
                         kai.facing = -kai.onWall;
                         kai.onWall = 0;
-                        kai.squashX = 0.8;
-                        kai.squashY = 1.3;
+                        kai.jumpBuffer = 0;
+                        kai.squashX = 0.78;
+                        kai.squashY = 1.32;
                         playSound('jump');
                         for (let i = 0; i < 14; i++) {
                             addParticle(kai.x, kai.y + kai.h/2, kai.facing*4, (Math.random()-0.5)*4, '#2cfbad', 4, 18);
                         }
                     }
-                } else {
-                    // Pulo curto se soltar a tecla cedo
-                    if (kai.vy < -5) kai.vy *= 0.65;
+                } else if (!jumpKey && kai.vy < -5) {
+                    // Pulo curto
+                    kai.vy *= 0.65;
                 }
             }
 
-            // Grapple Hook
+            // Grapple
             if (grappleKey && !kai.grappleActive) {
                 let nearest = null;
                 let minDist = 420;
@@ -1063,8 +1117,8 @@
                 const dy = target.y - (kai.y + kai.h/2);
                 const dist = Math.hypot(dx, dy);
 
-                kai.vx = (dx / dist) * 18.5;
-                kai.vy = (dy / dist) * 18.5;
+                kai.vx = (dx / dist) * 19;
+                kai.vy = (dy / dist) * 19;
 
                 addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*3, (Math.random()-0.5)*3, '#2cfbad', 5, 14);
 
@@ -1072,12 +1126,12 @@
                     kai.grappleActive = false;
                     kai.grappleTarget.active = false;
                     kai.grappleTarget = null;
-                    kai.vy = -11.5;
+                    kai.vy = -12;
                     kai.squashY = 1.25;
                 }
             }
 
-            // Ataques com Chicotes de Jade
+            // Ataques
             if (attackKey && kai.attackTimer === 0) {
                 kai.attackTimer = kai.attackMaxTimer;
                 playSound('whip');
@@ -1093,13 +1147,33 @@
                 checkWhipHit();
             }
 
-            // Jade Cyclone
+            // Cyclone
             if (cycloneKey && kai.cycloneTimer === 0 && kai.chi >= 15) {
                 kai.cycloneTimer = 34;
                 kai.chi -= 15;
                 screenShake = 7;
                 playSound('cyclone');
                 checkCycloneHit();
+            }
+
+            // CORNER CORRECTION (Ao colidir no teto por menos de 14px, empurra suavemente para o lado)
+            if (kai.vy < 0) {
+                for (let plat of platforms) {
+                    if (kai.x + kai.w > plat.x && kai.x < plat.x + plat.w) {
+                        if (kai.y + kai.vy < plat.y + plat.h && kai.y >= plat.y + plat.h) {
+                            // Borda direita da plataforma
+                            const overlapRight = (plat.x + plat.w) - kai.x;
+                            // Borda esquerda da plataforma
+                            const overlapLeft = (kai.x + kai.w) - plat.x;
+
+                            if (overlapRight > 0 && overlapRight <= 14) {
+                                kai.x += overlapRight + 2; // Desvia para a direita
+                            } else if (overlapLeft > 0 && overlapLeft <= 14) {
+                                kai.x -= overlapLeft + 2; // Desvia para a esquerda
+                            }
+                        }
+                    }
+                }
             }
 
             kai.x += kai.vx;
@@ -1111,10 +1185,8 @@
             if (kai.grounded) kai.coyoteTime = 8;
             else if (kai.coyoteTime > 0) kai.coyoteTime--;
 
-            // Limites do Mundo
             kai.x = Math.max(35, Math.min(WORLD.width - 35 - kai.w, kai.x));
 
-            // Atualizar Inimigos, Jombies, Chefe e Efeitos
             updateEnemies();
             updateJombies();
             updateBaoZhi();
@@ -1125,7 +1197,7 @@
             drawMinimap();
         }
 
-        /* --- SISTEMA DE COMBATE E HITBOXES --- */
+        /* --- COMBATE & HITBOXES --- */
         function checkWhipHit() {
             const kx = kai.x + kai.w / 2;
             const ky = kai.y + kai.h / 2;
@@ -1158,7 +1230,6 @@
                 hitAngle = Math.PI / 2;
             }
 
-            // Acertar Chefe Bao-Zhi
             if (boxIntersect(hitBox, baozhi) && baozhi.hp > 0 && baozhi.state !== 'teleport') {
                 baozhi.hp -= 25;
                 kai.chi = Math.min(kai.maxChi, kai.chi + 14);
@@ -1176,7 +1247,6 @@
                 if (baozhi.hp <= 0) defeatBoss();
             }
 
-            // Acertar Inimigos Comuns
             for (let en of enemies) {
                 if (en.hp > 0 && boxIntersect(hitBox, en)) {
                     en.hp -= 25;
@@ -1200,7 +1270,6 @@
                 }
             }
 
-            // Destruir Projéteis
             for (let i = bossProjectiles.length - 1; i >= 0; i--) {
                 const p = bossProjectiles[i];
                 if (Math.hypot(p.x - (hitBox.x + hitBox.w/2), p.y - (hitBox.y + hitBox.h/2)) < 70) {
@@ -1248,7 +1317,6 @@
             }
         }
 
-        /* --- ATUALIZAÇÃO DOS INIMIGOS COMUNS --- */
         function updateEnemies() {
             for (let en of enemies) {
                 if (en.hp <= 0) continue;
@@ -1256,15 +1324,12 @@
 
                 if (en.type === 'terracotta') {
                     en.x += en.vx;
-                    if (en.x < en.minX || en.x > en.maxX) {
-                        en.vx *= -1;
-                    }
+                    if (en.x < en.minX || en.x > en.maxX) en.vx *= -1;
                 } else if (en.type === 'specter') {
                     en.timer += 0.05;
                     en.y = en.baseY + Math.sin(en.timer) * 35;
                 }
 
-                // Dano em Kai por contato
                 if (boxIntersect(kai, en) && kai.isDashing === 0) {
                     kai.hp--;
                     screenShake = 9;
@@ -1277,13 +1342,11 @@
             }
         }
 
-        /* --- ATUALIZAÇÃO DOS JOMBIES INVOCADOS --- */
         function updateJombies() {
             for (let i = jombies.length - 1; i >= 0; i--) {
                 const jmb = jombies[i];
                 jmb.life--;
 
-                // Perseguir Bao-Zhi ou inimigo mais próximo
                 let target = baozhi.hp > 0 ? baozhi : null;
                 if (!target) {
                     for (let en of enemies) {
@@ -1296,7 +1359,6 @@
                     jmb.facing = dx > 0 ? 1 : -1;
                     jmb.x += jmb.facing * 3.5;
 
-                    // Ataque automático do Jombie
                     jmb.attackTimer++;
                     if (jmb.attackTimer >= 45 && Math.abs(dx) < 90) {
                         jmb.attackTimer = 0;
@@ -1309,21 +1371,14 @@
                 }
 
                 addParticle(jmb.x + jmb.w/2, jmb.y + jmb.h/2, (Math.random()-0.5)*1.5, -Math.random()*1.5, '#2cfbad', 4, 16);
-
-                if (jmb.life <= 0) {
-                    jombies.splice(i, 1);
-                }
+                if (jmb.life <= 0) jombies.splice(i, 1);
             }
         }
 
-        /* --- IA DE BAO-ZHI --- */
         function updateBaoZhi() {
             if (baozhi.hp <= 0) return;
 
-            // Iniciar luta se Kai entrar na arena do boss (x > 2700)
-            if (!baozhi.bossFightActive && kai.x > 2650) {
-                baozhi.bossFightActive = true;
-            }
+            if (!baozhi.bossFightActive && kai.x > 2650) baozhi.bossFightActive = true;
             if (!baozhi.bossFightActive) return;
 
             for (let c of baozhi.censers) {
@@ -1442,7 +1497,6 @@
             document.getElementById('popup-message').style.display = 'none';
         }
 
-        /* --- COLISÕES DO TERRENO --- */
         function handleHorizontalCollisions() {
             kai.onWall = 0;
             for (let plat of platforms) {
@@ -1507,18 +1561,17 @@
             }
         }
 
-        /* --- RENDERIZAÇÃO GRÁFICA HD COM CÂMERA METROIDVANIA --- */
+        /* --- RENDERIZAÇÃO GRÁFICA HD, LUZ DINÂMICA & GOD RAYS --- */
         function draw() {
             ctx.save();
 
-            // Screen Shake
             let shakeX = 0, shakeY = 0;
             if (screenShake > 0) {
                 shakeX = (Math.random() - 0.5) * screenShake;
                 shakeY = (Math.random() - 0.5) * screenShake;
             }
 
-            // 1. FUNDO COM PARALAXE REPETIDO NO MUNDO
+            // 1. FUNDO COM PARALAXE
             if (assets.bg.complete) {
                 const paralaxFactor = 0.25;
                 const bgW = 1280;
@@ -1532,14 +1585,35 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // Iluminação Vinheta
+            // 2. GOD RAYS (FEIXES DE LUZ ESPIRITUAL DESCENDO DO TETO)
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            for (let ray of godRays) {
+                const rayScreenX = ray.x - camera.x * 0.5;
+                const grad = ctx.createLinearGradient(rayScreenX, 0, rayScreenX + Math.tan(ray.angle) * 720, 720);
+                grad.addColorStop(0, `rgba(44, 251, 173, ${ray.alpha * 1.5})`);
+                grad.addColorStop(0.6, `rgba(167, 243, 208, ${ray.alpha * 0.8})`);
+                grad.addColorStop(1, 'rgba(44, 251, 173, 0)');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(rayScreenX - ray.width/2, 0);
+                ctx.lineTo(rayScreenX + ray.width/2, 0);
+                ctx.lineTo(rayScreenX + ray.width*1.4 + Math.tan(ray.angle) * 720, 720);
+                ctx.lineTo(rayScreenX - ray.width*0.6 + Math.tan(ray.angle) * 720, 720);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // Vinheta ambiente
             const ambientGrad = ctx.createRadialGradient(canvas.width/2, 280, 80, canvas.width/2, 280, 800);
             ambientGrad.addColorStop(0, 'rgba(10, 45, 30, 0.2)');
             ambientGrad.addColorStop(1, 'rgba(2, 6, 4, 0.7)');
             ctx.fillStyle = ambientGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // APLICAR TRANSLAÇÃO DA CÂMERA NO MUNDO
+            // CÂMERA NO MUNDO
             ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
 
             // Poeira de Chi
@@ -1550,7 +1624,7 @@
                 ctx.fill();
             }
 
-            // Altar / Estátua de Descanso
+            // Altar de Save
             ctx.save();
             ctx.fillStyle = '#142a1f';
             ctx.fillRect(saveShrine.x, saveShrine.y, saveShrine.w, saveShrine.h);
@@ -1583,7 +1657,7 @@
                 ctx.restore();
             }
 
-            // Plataformas Texturizadas
+            // Plataformas
             for (let plat of platforms) {
                 if (plat.type === 'ground' || plat.type === 'stone') {
                     if (assets.tile.complete) {
@@ -1613,7 +1687,7 @@
                 }
             }
 
-            // After-Images (Chi Dash)
+            // After-Images
             for (let ai of afterImages) {
                 ctx.save();
                 ctx.globalAlpha = ai.alpha;
@@ -1627,7 +1701,7 @@
                 ctx.restore();
             }
 
-            // Inimigos Comuns
+            // Inimigos
             for (let en of enemies) {
                 if (en.hp <= 0) continue;
                 ctx.save();
@@ -1637,7 +1711,6 @@
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(-en.w/2, -en.h/2, en.w, en.h);
                 } else if (en.type === 'terracotta') {
-                    // Soldado de Terracota
                     ctx.fillStyle = '#57331b';
                     ctx.fillRect(-en.w/2, -en.h/2, en.w, en.h);
                     ctx.fillStyle = '#2cfbad';
@@ -1645,7 +1718,6 @@
                     ctx.shadowBlur = 8;
                     ctx.fillRect(en.vx > 0 ? 8 : -14, -en.h/2 + 10, 6, 6);
                 } else if (en.type === 'specter') {
-                    // Espírito Voador
                     ctx.fillStyle = '#7e22ce';
                     ctx.shadowColor = '#a855f7';
                     ctx.shadowBlur = 15;
@@ -1660,7 +1732,7 @@
                 ctx.restore();
             }
 
-            // Jombies Invocados de Kai
+            // Jombies
             for (let jmb of jombies) {
                 ctx.save();
                 ctx.translate(jmb.x + jmb.w/2, jmb.y + jmb.h/2);
@@ -1669,7 +1741,6 @@
                 ctx.shadowColor = '#2cfbad';
                 ctx.shadowBlur = 15;
                 ctx.fillRect(-jmb.w/2, -jmb.h/2, jmb.w, jmb.h);
-                // Olhos de jade
                 ctx.fillStyle = '#a7f3d0';
                 ctx.fillRect(8, -jmb.h/2 + 12, 6, 6);
                 ctx.restore();
@@ -1733,23 +1804,81 @@
                 ctx.restore();
             }
 
+            // 3. ILUMINAÇÃO DINÂMICA EM TEMPO REAL DAS LÂMINAS DE KAI
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            const kx = kai.x + kai.w / 2;
+            const ky = kai.y + kai.h / 2;
+            const lightGrad = ctx.createRadialGradient(kx, ky, 20, kx, ky, 220);
+            lightGrad.addColorStop(0, 'rgba(44, 251, 173, 0.28)');
+            lightGrad.addColorStop(0.5, 'rgba(44, 251, 173, 0.1)');
+            lightGrad.addColorStop(1, 'rgba(44, 251, 173, 0)');
+            ctx.fillStyle = lightGrad;
+            ctx.beginPath();
+            ctx.arc(kx, ky, 220, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (baozhi.hp > 0) {
+                const bx = baozhi.x + baozhi.w / 2;
+                const by = baozhi.y + baozhi.h / 2;
+                const bossLight = ctx.createRadialGradient(bx, by, 30, bx, by, 250);
+                bossLight.addColorStop(0, 'rgba(217, 70, 239, 0.25)');
+                bossLight.addColorStop(1, 'rgba(217, 70, 239, 0)');
+                ctx.fillStyle = bossLight;
+                ctx.beginPath();
+                ctx.arc(bx, by, 250, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
             ctx.restore();
             requestAnimationFrame(draw);
         }
 
-        /* --- DESENHO DE KAI --- */
+        /* --- DESENHO DE KAI COM INCLINAÇÃO (LEAN) E CAPA DINÂMICA --- */
         function drawKai() {
             const kx = kai.x + kai.w / 2;
             const ky = kai.y + kai.h / 2;
 
             ctx.save();
             ctx.translate(kx, ky);
+
+            // Squash & Stretch
             ctx.scale(kai.squashX, kai.squashY);
+
+            // INCLINAÇÃO DINÂMICA DO CORPO (LEAN FORWARD)
+            ctx.rotate(kai.leanAngle);
+
             if (kai.facing === -1) ctx.scale(-1, 1);
 
+            // Step Bobbing (Oscilação de passos ao andar)
+            let bobY = 0;
+            if (kai.grounded && Math.abs(kai.vx) > 0.5) {
+                bobY = Math.sin(kai.walkTimer * 2) * 2.5;
+            }
+            ctx.translate(0, bobY);
+
+            // Respiração em repouso
             const breathe = Math.sin(kai.animTimer * 2) * 0.025;
             ctx.scale(1 + breathe, 1 - breathe);
 
+            // CAPA DINÂMICA COM ONDA SENOIDAL INERCIAL
+            ctx.save();
+            ctx.fillStyle = '#0f241a';
+            ctx.strokeStyle = '#1b4d36';
+            ctx.lineWidth = 1.5;
+            const wave1 = Math.sin(kai.capeWave) * 12;
+            const wave2 = Math.cos(kai.capeWave * 1.3) * 16;
+            ctx.beginPath();
+            ctx.moveTo(-16, -18);
+            ctx.quadraticCurveTo(-38 - Math.abs(kai.vx)*3, 10 + wave1, -30 - Math.abs(kai.vx)*5, 42 + wave2);
+            ctx.quadraticCurveTo(-15, 30, -5, 12);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // Grapple Line
             if (kai.grappleActive && kai.grappleTarget) {
                 ctx.save();
                 ctx.strokeStyle = '#2cfbad';
@@ -1765,6 +1894,7 @@
                 ctx.restore();
             }
 
+            // Jade Cyclone
             if (kai.cycloneTimer > 0) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'lighter';
@@ -1785,9 +1915,10 @@
                 ctx.restore();
             }
 
+            // SPRITE PRINCIPAL
             if (assets.kai.complete) {
                 ctx.save();
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
                 ctx.beginPath();
                 ctx.ellipse(0, 42, 28, 8, 0, 0, Math.PI * 2);
                 ctx.fill();
@@ -1796,6 +1927,7 @@
                 ctx.drawImage(assets.kai, -54, -62, 108, 124);
             }
 
+            // EFEITO VISUAL DE CORTE
             if (kai.attackTimer > 0) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'lighter';
