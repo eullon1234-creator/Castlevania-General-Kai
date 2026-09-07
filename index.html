@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Castlevania: General Kai - Metroidvania 2D</title>
+    <title>Castlevania: General Kai - Metroidvania 2D HD</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,9 +12,9 @@
             user-select: none;
         }
         body {
-            background-color: #050807;
+            background-color: #030605;
             color: #d8f5e5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cinzel', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -24,31 +24,32 @@
         }
         #game-container {
             position: relative;
-            box-shadow: 0 0 50px rgba(20, 245, 155, 0.25), 0 0 90px rgba(0, 0, 0, 0.95);
-            border: 2px solid rgba(40, 200, 130, 0.4);
-            border-radius: 8px;
+            box-shadow: 0 0 60px rgba(18, 245, 155, 0.3), 0 0 120px rgba(0, 0, 0, 0.98);
+            border: 2px solid rgba(40, 200, 130, 0.5);
+            border-radius: 10px;
             overflow: hidden;
-            background: #06090c;
+            background: #040807;
         }
         canvas {
             display: block;
         }
         #hud {
             position: absolute;
-            top: 18px;
-            left: 20px;
+            top: 20px;
+            left: 25px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 18px;
             pointer-events: none;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
         }
         .chi-orb {
-            width: 76px;
-            height: 76px;
+            width: 82px;
+            height: 82px;
             border-radius: 50%;
-            border: 3px solid #1ef59b;
-            background: radial-gradient(circle at 35% 35%, #05291b 0%, #03140e 80%);
-            box-shadow: 0 0 20px rgba(30, 245, 155, 0.4), inset 0 0 15px rgba(30, 245, 155, 0.3);
+            border: 3px solid #2cfbad;
+            background: radial-gradient(circle at 35% 35%, #05291b 0%, #020e09 85%);
+            box-shadow: 0 0 25px rgba(44, 251, 173, 0.5), inset 0 0 20px rgba(44, 251, 173, 0.4);
             position: relative;
             overflow: hidden;
         }
@@ -58,20 +59,21 @@
             left: 0;
             width: 100%;
             height: 50%;
-            background: linear-gradient(0deg, #077943 0%, #1ef59b 100%);
-            box-shadow: 0 0 15px #1ef59b;
+            background: linear-gradient(0deg, #077943 0%, #2cfbad 100%);
+            box-shadow: 0 0 20px #2cfbad;
             transition: height 0.15s ease-out;
-            opacity: 0.9;
+            opacity: 0.92;
         }
         .chi-label {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 14px;
+            font-weight: 800;
             color: #ffffff;
-            text-shadow: 0 0 8px #000;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px #000, 0 0 5px #2cfbad;
         }
         .health-container {
             display: flex;
@@ -79,153 +81,164 @@
             gap: 6px;
         }
         .health-label {
-            font-size: 12px;
-            letter-spacing: 2px;
+            font-size: 13px;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            color: #92e0be;
-            font-weight: 600;
+            color: #b1ffdb;
+            font-weight: 800;
+            text-shadow: 0 0 8px rgba(44, 251, 173, 0.6);
         }
         .health-shards {
             display: flex;
-            gap: 6px;
+            gap: 8px;
         }
         .shard {
-            width: 26px;
-            height: 18px;
-            background: #1ef59b;
+            width: 30px;
+            height: 20px;
+            background: linear-gradient(135deg, #a7f9d4 0%, #1bf799 60%, #0b804d 100%);
             border: 2px solid #ffffff;
-            border-radius: 3px;
+            border-radius: 4px;
             transform: skewX(-20deg);
-            box-shadow: 0 0 10px rgba(30, 245, 155, 0.7);
-            transition: all 0.2s;
+            box-shadow: 0 0 14px rgba(44, 251, 173, 0.85);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .shard.lost {
-            background: #1a2c24;
-            border-color: #3b5a4d;
+            background: #111f18;
+            border-color: #2b4538;
             box-shadow: none;
-            opacity: 0.4;
+            opacity: 0.35;
+            transform: skewX(-20deg) scale(0.9);
         }
         #boss-hud {
             position: absolute;
             bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
-            width: 600px;
+            width: 640px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.5s;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
         #boss-hud.visible {
             opacity: 1;
         }
         .boss-name {
             font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 3px;
+            font-weight: 800;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            color: #e5b9f7;
-            text-shadow: 0 0 10px rgba(212, 107, 245, 0.8);
+            color: #f1cdff;
+            text-shadow: 0 0 12px rgba(212, 107, 245, 0.9), 0 0 25px rgba(182, 97, 217, 0.6);
         }
         .boss-bar-bg {
             width: 100%;
-            height: 14px;
-            background: #190c24;
-            border: 2px solid #b661d9;
-            border-radius: 7px;
+            height: 16px;
+            background: #13071d;
+            border: 2px solid #cf7cf2;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 0 15px rgba(182, 97, 217, 0.4);
+            box-shadow: 0 0 20px rgba(207, 124, 242, 0.5), inset 0 0 10px rgba(0, 0, 0, 0.9);
         }
         .boss-bar-fill {
             height: 100%;
             width: 100%;
-            background: linear-gradient(90deg, #741e9c, #d56cf7);
+            background: linear-gradient(90deg, #6b1494, #c95df0, #f6d1ff);
+            box-shadow: 0 0 12px #cf7cf2;
             transition: width 0.1s linear;
         }
         #controls-legend {
             position: absolute;
-            top: 15px;
-            right: 20px;
-            background: rgba(8, 15, 12, 0.85);
-            border: 1px solid rgba(40, 200, 130, 0.35);
-            border-radius: 6px;
-            padding: 10px 14px;
+            top: 18px;
+            right: 25px;
+            background: rgba(6, 15, 11, 0.88);
+            border: 1px solid rgba(44, 251, 173, 0.4);
+            border-radius: 8px;
+            padding: 12px 16px;
             font-size: 12px;
             color: #b7e4cf;
-            line-height: 1.6;
+            line-height: 1.7;
             pointer-events: none;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
         }
         .key {
-            background: #183327;
-            border: 1px solid #2ae496;
-            border-radius: 3px;
-            padding: 1px 5px;
+            background: #143525;
+            border: 1px solid #2cfbad;
+            border-radius: 4px;
+            padding: 1px 6px;
             font-weight: bold;
             color: #fff;
+            box-shadow: 0 0 6px rgba(44, 251, 173, 0.3);
         }
         #popup-message {
             position: absolute;
-            top: 40%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(5, 20, 15, 0.95);
-            border: 2px solid #20f59e;
-            box-shadow: 0 0 35px rgba(32, 245, 158, 0.5);
-            padding: 24px 35px;
-            border-radius: 10px;
+            background: rgba(4, 18, 13, 0.96);
+            border: 2px solid #2cfbad;
+            box-shadow: 0 0 50px rgba(44, 251, 173, 0.6), 0 0 100px rgba(0, 0, 0, 0.9);
+            padding: 30px 45px;
+            border-radius: 12px;
             text-align: center;
             display: none;
             z-index: 10;
+            backdrop-filter: blur(10px);
         }
         #popup-message h2 {
-            color: #20f59e;
-            font-size: 26px;
-            letter-spacing: 2px;
-            margin-bottom: 12px;
-            text-shadow: 0 0 12px #20f59e;
+            color: #2cfbad;
+            font-size: 30px;
+            letter-spacing: 3px;
+            margin-bottom: 14px;
+            text-shadow: 0 0 20px #2cfbad;
         }
         #popup-message p {
-            color: #e2f9ee;
-            font-size: 15px;
-            line-height: 1.5;
-            margin-bottom: 20px;
+            color: #ebfcf4;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
         }
         #popup-message button {
-            background: #1ef59b;
+            background: linear-gradient(135deg, #2cfbad, #0bb86c);
             color: #03140d;
             border: none;
-            padding: 9px 24px;
-            font-weight: bold;
-            font-size: 14px;
-            border-radius: 4px;
+            padding: 11px 30px;
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: 1px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s;
+            box-shadow: 0 0 20px rgba(44, 251, 173, 0.4);
         }
         #popup-message button:hover {
             background: #ffffff;
-            box-shadow: 0 0 15px #1ef59b;
+            box-shadow: 0 0 30px #2cfbad;
+            transform: scale(1.05);
         }
         #art-viewer-btn {
             position: absolute;
-            bottom: 15px;
-            right: 20px;
-            background: rgba(10, 30, 22, 0.85);
-            border: 1px solid #1ef59b;
-            color: #1ef59b;
-            padding: 7px 14px;
-            font-size: 12px;
-            border-radius: 4px;
+            bottom: 18px;
+            right: 25px;
+            background: rgba(10, 30, 22, 0.9);
+            border: 1px solid #2cfbad;
+            color: #2cfbad;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             transition: all 0.2s;
+            backdrop-filter: blur(4px);
         }
         #art-viewer-btn:hover {
-            background: #1ef59b;
+            background: #2cfbad;
             color: #04120b;
+            box-shadow: 0 0 15px rgba(44, 251, 173, 0.6);
         }
         #modal-art {
             position: fixed;
@@ -233,28 +246,28 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.88);
+            background: rgba(0, 0, 0, 0.92);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 100;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
         }
         .modal-content {
-            background: #0b1410;
-            border: 2px solid #20f59e;
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 900px;
+            background: #08120d;
+            border: 2px solid #2cfbad;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 960px;
             width: 90%;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            box-shadow: 0 0 40px rgba(32, 245, 158, 0.3);
+            gap: 18px;
+            box-shadow: 0 0 60px rgba(44, 251, 173, 0.35);
         }
         .art-gallery {
             display: flex;
-            gap: 20px;
+            gap: 24px;
             justify-content: center;
         }
         .art-card {
@@ -265,26 +278,29 @@
             width: 100%;
             max-height: 480px;
             object-fit: cover;
-            border-radius: 6px;
-            border: 1px solid #277755;
+            border-radius: 8px;
+            border: 1px solid #1f6e4a;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
         }
         .art-card h4 {
-            margin-top: 8px;
-            color: #20f59e;
-            letter-spacing: 1px;
+            margin-top: 10px;
+            color: #2cfbad;
+            letter-spacing: 2px;
+            font-size: 15px;
         }
         .close-modal {
             align-self: flex-end;
             background: transparent;
-            border: 1px solid #ff5577;
-            color: #ff5577;
-            padding: 5px 12px;
+            border: 1px solid #ff4d6d;
+            color: #ff4d6d;
+            padding: 6px 14px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            transition: all 0.2s;
         }
         .close-modal:hover {
-            background: #ff5577;
+            background: #ff4d6d;
             color: #fff;
         }
     </style>
@@ -310,11 +326,11 @@
         <div id="controls-legend">
             <div><span class="key">A</span> / <span class="key">D</span> ou <span class="key">←</span> <span class="key">→</span> : Andar</div>
             <div><span class="key">Espaço</span> ou <span class="key">W</span> : Pulo / Wall-Jump</div>
-            <div><span class="key">Shift</span> : Chi Dash (Esquiva)</div>
-            <div><span class="key">Z</span> ou <span class="key">J</span> ou <span class="key">Click Esq</span> : Chicote de Jade (Dir/Cima/Baixo)</div>
-            <div><span class="key">X</span> ou <span class="key">K</span> : Jade Cyclone (Giro 360°)</div>
-            <div><span class="key">C</span> ou <span class="key">L</span> ou <span class="key">Click Dir</span> : Jade Grapple (Gancho)</div>
-            <div><span class="key">F</span> : Curar Chi (Segurar)</div>
+            <div><span class="key">Shift</span> : Chi Dash (Esquiva com Sombra)</div>
+            <div><span class="key">Z</span> / <span class="key">J</span> / <span class="key">Click Esq</span> : Lâminas de Jade (Dir/Cima/Baixo)</div>
+            <div><span class="key">X</span> ou <span class="key">K</span> : Jade Cyclone (Giro 360° com Vórtice)</div>
+            <div><span class="key">C</span> / <span class="key">L</span> / <span class="key">Click Dir</span> : Jade Grapple (Gancho com Correntes)</div>
+            <div><span class="key">F</span> : Curar Chi (Segurar no solo)</div>
         </div>
 
         <!-- Barra do Boss: Bao-Zhi -->
@@ -325,17 +341,17 @@
             </div>
         </div>
 
-        <!-- Notificação de Vitória / Amuleto Obtido -->
+        <!-- Notificação de Vitória -->
         <div id="popup-message">
             <h2 id="popup-title">AMULETO DE JADE ABSORVIDO!</h2>
-            <p id="popup-desc">Você drenou o Chi de Bao-Zhi! O Amuleto do Eremita agora está na cintura do General Kai.</p>
-            <button onclick="resetBossBattle()">Jogar Batalha Novamente</button>
+            <p id="popup-desc">O Chi ancestral de Bao-Zhi foi purificado e comprimido em um Amuleto de Jade na cintura do General Kai!</p>
+            <button onclick="resetBossBattle()">Batalhar Novamente</button>
         </div>
 
-        <button id="art-viewer-btn" onclick="openArtModal()">Ver Artes Conceituais</button>
+        <button id="art-viewer-btn" onclick="openArtModal()">Galeria de Artes HD</button>
     </div>
 
-    <!-- Modal com as artes conceituais -->
+    <!-- Modal de Artes -->
     <div id="modal-art">
         <div class="modal-content">
             <button class="close-modal" onclick="closeArtModal()">FECHAR ✕</button>
@@ -346,13 +362,27 @@
                 </div>
                 <div class="art-card">
                     <img src="baozhi_boss_concept_1788720206068.jpg" alt="Bao Zhi">
-                    <h4>Bao-Zhi - O Eremita da Praga</h4>
+                    <h4>Bao-Zhi - O Eremita da Praga Óssea</h4>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        /* --- CARREGAMENTO DE TEXTURAS E ASSETS HD --- */
+        const assets = {
+            bg: new Image(),
+            tile: new Image(),
+            vfxSlash: new Image(),
+            kai: new Image(),
+            baozhi: new Image()
+        };
+        assets.bg.src = 'bg_catacomb.jpg';
+        assets.tile.src = 'tile_platform.png';
+        assets.vfxSlash.src = 'vfx_slash.png';
+        assets.kai.src = 'sprite_kai.png';
+        assets.baozhi.src = 'sprite_baozhi.png';
+
         /* --- SÍNTESE DE ÁUDIO PROCEDURAL (Web Audio API) --- */
         let audioCtx = null;
         function initAudio() {
@@ -367,74 +397,74 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(320, now);
-                osc.frequency.exponentialRampToValueAtTime(80, now + 0.16);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + 0.16);
-            } else if (type === 'hit') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(140, now);
-                osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + 0.12);
-            } else if (type === 'jump') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(180, now);
-                osc.frequency.exponentialRampToValueAtTime(360, now + 0.15);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + 0.15);
-            } else if (type === 'cyclone') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.linearRampToValueAtTime(250, now + 0.35);
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + 0.35);
-            } else if (type === 'grapple') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(500, now);
-                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.18);
-                gain.gain.setValueAtTime(0.25, now);
+                osc.frequency.setValueAtTime(360, now);
+                osc.frequency.exponentialRampToValueAtTime(70, now + 0.18);
+                gain.gain.setValueAtTime(0.35, now);
                 gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start(now);
                 osc.stop(now + 0.18);
+            } else if (type === 'hit') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.exponentialRampToValueAtTime(35, now + 0.14);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.14);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.14);
+            } else if (type === 'jump') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(170, now);
+                osc.frequency.exponentialRampToValueAtTime(380, now + 0.14);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.14);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.14);
+            } else if (type === 'cyclone') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(450, now);
+                osc.frequency.linearRampToValueAtTime(220, now + 0.38);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.38);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.38);
+            } else if (type === 'grapple') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(540, now);
+                osc.frequency.exponentialRampToValueAtTime(1300, now + 0.2);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.2);
             } else if (type === 'heal') {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(240, now);
-                osc.frequency.exponentialRampToValueAtTime(600, now + 0.4);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.exponentialRampToValueAtTime(650, now + 0.45);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.45);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start(now);
-                osc.stop(now + 0.4);
+                osc.stop(now + 0.45);
             }
         }
 
@@ -472,46 +502,67 @@
         });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-        /* --- SISTEMA DE PARTÍCULAS E SCREEN SHAKE --- */
+        /* --- HIT-STOP & SCREEN SHAKE --- */
+        let hitStopFrames = 0;
         let screenShake = 0;
         const particles = [];
-        function addParticle(x, y, vx, vy, color, size, life, glow = true) {
-            particles.push({ x, y, vx, vy, color, size, life, maxLife: life, glow });
+        const afterImages = [];
+
+        function triggerHitStop(frames = 4) {
+            hitStopFrames = frames;
+        }
+
+        function addParticle(x, y, vx, vy, color, size, life, glow = true, isSlashCrystal = false) {
+            particles.push({ x, y, vx, vy, color, size, life, maxLife: life, glow, isSlashCrystal, rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.2 });
+        }
+
+        function addSlashImpact(x, y, dirAngle) {
+            // Explosão de estilhaços de cristal de jade e lâminas
+            for (let i = 0; i < 24; i++) {
+                const angle = dirAngle + (Math.random() - 0.5) * 1.5;
+                const spd = Math.random() * 12 + 3;
+                addParticle(x, y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#2cfbad', Math.random()*5+3, 22, true, true);
+            }
+            // Anel de choque de impacto
+            particles.push({
+                x, y, vx: 0, vy: 0, color: '#ffffff', size: 5, targetSize: 45, life: 12, maxLife: 12, isShockwave: true
+            });
         }
 
         /* --- ARENA E PLATAFORMAS --- */
         const platforms = [
-            { x: 0, y: 640, w: 1280, h: 80, type: 'ground' }, // Chão principal
-            { x: 180, y: 480, w: 220, h: 22, type: 'stone' },
-            { x: 880, y: 480, w: 220, h: 22, type: 'stone' },
-            { x: 490, y: 360, w: 300, h: 22, type: 'stone' },
-            { x: 80, y: 260, w: 180, h: 20, type: 'stone' },
-            { x: 1020, y: 260, w: 180, h: 20, type: 'stone' },
+            { x: 0, y: 640, w: 1280, h: 80, type: 'ground' },
+            { x: 180, y: 480, w: 230, h: 28, type: 'stone' },
+            { x: 870, y: 480, w: 230, h: 28, type: 'stone' },
+            { x: 480, y: 360, w: 320, h: 28, type: 'stone' },
+            { x: 70, y: 260, w: 190, h: 26, type: 'stone' },
+            { x: 1020, y: 260, w: 190, h: 26, type: 'stone' },
             { x: 0, y: 0, w: 30, h: 720, type: 'wall' },
             { x: 1250, y: 0, w: 30, h: 720, type: 'wall' }
         ];
 
-        // Anéis místicos de grapple
         const grapplePoints = [
-            { x: 300, y: 200, active: false },
-            { x: 640, y: 150, active: false },
-            { x: 980, y: 200, active: false }
+            { x: 290, y: 190, pulse: 0, active: false },
+            { x: 640, y: 140, pulse: 0, active: false },
+            { x: 990, y: 190, pulse: 0, active: false }
         ];
 
         /* --- PROTAGONISTA: GENERAL KAI --- */
         const kai = {
             x: 200,
-            y: 550,
-            w: 52,
-            h: 70,
+            y: 530,
+            w: 64,
+            h: 88,
             vx: 0,
             vy: 0,
-            speed: 5.8,
+            speed: 6.2,
             facing: 1,
             grounded: false,
             onWall: 0,
-            jumpBuffer: 0,
             coyoteTime: 0,
+            animTimer: 0,
+            squashY: 1,
+            squashX: 1,
             
             // Atributos
             maxHp: 5,
@@ -523,48 +574,62 @@
             dashCooldown: 0,
             isDashing: 0,
             attackTimer: 0,
-            attackDir: 'side',
+            attackMaxTimer: 18,
+            attackDir: 'side', // 'side', 'up', 'down'
             cycloneTimer: 0,
             healChannel: 0,
             
-            // Grapple hook
+            // Grapple
             grappleActive: false,
             grappleTarget: null,
-            grappleT: 0,
             
-            // Lâminas e física de correntes
+            // Cadeia de correntes dinâmicas (Inverse Kinematics)
             chains: [
-                { angle: 0, length: 75 },
-                { angle: 0, length: 90 }
+                { segments: [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}] },
+                { segments: [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}] }
             ]
         };
 
         /* --- CHEFE 1: BAO-ZHI --- */
         const baozhi = {
             x: 950,
-            y: 400,
-            w: 64,
-            h: 90,
+            y: 380,
+            w: 80,
+            h: 110,
             vx: 0,
             vy: 0,
-            hoverBaseY: 400,
+            hoverBaseY: 380,
             hoverTimer: 0,
-            maxHp: 300,
-            hp: 300,
+            maxHp: 320,
+            hp: 320,
             state: 'hover',
             stateTimer: 120,
             facing: -1,
+            teleportFade: 1,
             censers: [
-                { angle: 0, dist: 70, speed: 0.035 },
-                { angle: 2.09, dist: 70, speed: 0.035 },
-                { angle: 4.18, dist: 70, speed: 0.035 }
+                { angle: 0, dist: 80, speed: 0.038, smokeTimer: 0 },
+                { angle: 2.09, dist: 80, speed: 0.038, smokeTimer: 0 },
+                { angle: 4.18, dist: 80, speed: 0.038, smokeTimer: 0 }
             ],
             bossFightActive: false
         };
 
         const bossProjectiles = [];
 
-        /* --- ATUALIZAÇÃO DA INTERFACE (HUD) --- */
+        /* --- POEIRA AMBIENTAL (Motes de Chi) --- */
+        const ambientMotes = [];
+        for (let i = 0; i < 40; i++) {
+            ambientMotes.push({
+                x: Math.random() * 1280,
+                y: Math.random() * 720,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: -Math.random() * 0.5 - 0.1,
+                size: Math.random() * 3 + 1,
+                alpha: Math.random() * 0.6 + 0.2
+            });
+        }
+
+        /* --- HUD --- */
         function updateHUD() {
             const shardsContainer = document.getElementById('shards-container');
             shardsContainer.innerHTML = '';
@@ -587,11 +652,41 @@
             }
         }
 
-        /* --- LOOP PRINCIPAL E FÍSICA --- */
+        /* --- FÍSICA E LOOP PRINCIPAL --- */
         function update() {
-            if (screenShake > 0) screenShake *= 0.88;
+            // Hit Stop (Screen freeze em impactos)
+            if (hitStopFrames > 0) {
+                hitStopFrames--;
+                return;
+            }
+
+            // Screen Shake Decay
+            if (screenShake > 0) screenShake *= 0.86;
             if (screenShake < 0.2) screenShake = 0;
 
+            // Timer de animações gerais
+            kai.animTimer += 0.08;
+
+            // Squash & Stretch recovery
+            kai.squashX += (1 - kai.squashX) * 0.2;
+            kai.squashY += (1 - kai.squashY) * 0.2;
+
+            // Poeira ambiente
+            for (let m of ambientMotes) {
+                m.x += m.vx;
+                m.y += m.vy;
+                if (m.y < 0) {
+                    m.y = 720;
+                    m.x = Math.random() * 1280;
+                }
+            }
+
+            // Anéis de grapple pulse
+            for (let gp of grapplePoints) {
+                gp.pulse += 0.05;
+            }
+
+            // 1. INPUTS KAI
             const moveLeft = keys['a'] || keys['arrowleft'];
             const moveRight = keys['d'] || keys['arrowright'];
             const jumpKey = keys[' '] || keys['w'] || keys['arrowup'];
@@ -605,42 +700,55 @@
             if (kai.attackTimer > 0) kai.attackTimer--;
             if (kai.cycloneTimer > 0) kai.cycloneTimer--;
 
-            // Cura pelo Chi
+            // Foco de Chi (Cura)
             if (healKey && kai.grounded && kai.chi >= 30 && kai.hp < kai.maxHp) {
                 kai.healChannel++;
-                kai.vx *= 0.5;
-                addParticle(kai.x + kai.w/2 + (Math.random()-0.5)*40, kai.y + kai.h - Math.random()*50, 0, -1.8, '#1ef59b', 4, 25);
-                if (kai.healChannel >= 50) {
+                kai.vx *= 0.4;
+                addParticle(kai.x + kai.w/2 + (Math.random()-0.5)*45, kai.y + kai.h - Math.random()*50, 0, -2.5, '#2cfbad', 4, 30);
+                if (kai.healChannel >= 48) {
                     kai.chi -= 30;
                     kai.hp++;
                     kai.healChannel = 0;
                     playSound('heal');
-                    screenShake = 3;
-                    for (let i = 0; i < 30; i++) {
-                        addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*8, (Math.random()-0.5)*8, '#5effbb', 6, 35);
+                    screenShake = 4;
+                    for (let i = 0; i < 35; i++) {
+                        addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*10, (Math.random()-0.5)*10, '#5effbb', 6, 35);
                     }
                 }
             } else {
                 kai.healChannel = 0;
             }
 
-            // Dash Fantasma
+            // Chi Dash com Sombras Espectrais
             if (dashKey && kai.dashCooldown === 0 && !kai.isDashing && kai.chi >= 5) {
                 kai.isDashing = 14;
-                kai.dashCooldown = 40;
+                kai.dashCooldown = 38;
                 kai.chi -= 5;
                 kai.vy = 0;
-                kai.vx = kai.facing * 16;
+                kai.vx = kai.facing * 17;
+                kai.squashX = 1.4;
+                kai.squashY = 0.7;
                 playSound('whip');
-                for (let i = 0; i < 15; i++) {
-                    addParticle(kai.x + kai.w/2, kai.y + kai.h/2, -kai.facing*Math.random()*4, (Math.random()-0.5)*4, '#17ff97', 5, 20);
+                triggerHitStop(2);
+
+                for (let i = 0; i < 20; i++) {
+                    addParticle(kai.x + kai.w/2, kai.y + kai.h/2, -kai.facing*Math.random()*5, (Math.random()-0.5)*5, '#17ff97', 6, 25);
                 }
             }
 
             if (kai.isDashing > 0) {
                 kai.isDashing--;
                 kai.vy = 0;
-                addParticle(kai.x + kai.w/2, kai.y + kai.h/2, 0, 0, 'rgba(30, 245, 155, 0.5)', 8, 12);
+                // Gerar After-Image
+                if (kai.isDashing % 3 === 0) {
+                    afterImages.push({
+                        x: kai.x,
+                        y: kai.y,
+                        facing: kai.facing,
+                        alpha: 0.65,
+                        life: 14
+                    });
+                }
             } else if (!kai.grappleActive) {
                 if (moveLeft) {
                     kai.vx = -kai.speed;
@@ -649,40 +757,47 @@
                     kai.vx = kai.speed;
                     kai.facing = 1;
                 } else {
-                    kai.vx *= 0.8;
+                    kai.vx *= 0.82;
                     if (Math.abs(kai.vx) < 0.2) kai.vx = 0;
                 }
 
-                kai.vy += 0.65;
-                if (kai.vy > 14) kai.vy = 14;
+                kai.vy += 0.68;
+                if (kai.vy > 15) kai.vy = 15;
 
                 if (kai.onWall !== 0 && !kai.grounded && kai.vy > 0) {
-                    kai.vy = Math.min(kai.vy, 2.5);
-                    addParticle(kai.onWall === -1 ? kai.x : kai.x + kai.w, kai.y + kai.h*0.7, 0, -1, '#3bcca0', 3, 10);
+                    kai.vy = Math.min(kai.vy, 2.2);
+                    addParticle(kai.onWall === -1 ? kai.x : kai.x + kai.w, kai.y + kai.h*0.75, 0, -1.2, '#2cfbad', 3, 12);
                 }
 
                 if (jumpKey) {
                     if (kai.coyoteTime > 0) {
-                        kai.vy = -13.5;
+                        kai.vy = -14;
                         kai.coyoteTime = 0;
-                        playSound('jump');
-                    } else if (kai.onWall !== 0) {
-                        kai.vy = -12.5;
-                        kai.vx = -kai.onWall * 9;
-                        kai.facing = -kai.onWall;
-                        kai.onWall = 0;
+                        kai.squashX = 0.75;
+                        kai.squashY = 1.35;
                         playSound('jump');
                         for (let i = 0; i < 10; i++) {
-                            addParticle(kai.x, kai.y + kai.h/2, kai.facing*3, (Math.random()-0.5)*3, '#1ef59b', 4, 15);
+                            addParticle(kai.x + kai.w/2, kai.y + kai.h, (Math.random()-0.5)*6, -Math.random()*3, '#2cfbad', 4, 15);
+                        }
+                    } else if (kai.onWall !== 0) {
+                        kai.vy = -13;
+                        kai.vx = -kai.onWall * 10;
+                        kai.facing = -kai.onWall;
+                        kai.onWall = 0;
+                        kai.squashX = 0.8;
+                        kai.squashY = 1.3;
+                        playSound('jump');
+                        for (let i = 0; i < 14; i++) {
+                            addParticle(kai.x, kai.y + kai.h/2, kai.facing*4, (Math.random()-0.5)*4, '#2cfbad', 4, 18);
                         }
                     }
                 }
             }
 
-            // Grapple Hook
+            // Grapple Hook (Gancho)
             if (grappleKey && !kai.grappleActive) {
                 let nearest = null;
-                let minDist = 380;
+                let minDist = 420;
                 for (let gp of grapplePoints) {
                     const d = Math.hypot(gp.x - (kai.x + kai.w/2), gp.y - (kai.y + kai.h/2));
                     if (d < minDist) {
@@ -695,6 +810,7 @@
                     kai.grappleTarget = nearest;
                     nearest.active = true;
                     playSound('grapple');
+                    triggerHitStop(2);
                 }
             }
 
@@ -704,22 +820,23 @@
                 const dy = target.y - (kai.y + kai.h/2);
                 const dist = Math.hypot(dx, dy);
 
-                kai.vx = (dx / dist) * 16;
-                kai.vy = (dy / dist) * 16;
+                kai.vx = (dx / dist) * 18;
+                kai.vy = (dy / dist) * 18;
 
-                addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, '#20f59e', 5, 12);
+                addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*3, (Math.random()-0.5)*3, '#2cfbad', 5, 14);
 
-                if (dist < 40 || keys[' '] || keys['w']) {
+                if (dist < 45 || keys[' '] || keys['w']) {
                     kai.grappleActive = false;
                     kai.grappleTarget.active = false;
                     kai.grappleTarget = null;
-                    kai.vy = -10;
+                    kai.vy = -11;
+                    kai.squashY = 1.25;
                 }
             }
 
-            // Ataques com chicote
+            // Ataques com Lâminas de Jade
             if (attackKey && kai.attackTimer === 0) {
-                kai.attackTimer = 18;
+                kai.attackTimer = kai.attackMaxTimer;
                 playSound('whip');
 
                 if (keys['arrowup'] || keys['w']) {
@@ -733,11 +850,11 @@
                 checkWhipHit();
             }
 
-            // Cyclone
+            // Jade Cyclone (Giro 360°)
             if (cycloneKey && kai.cycloneTimer === 0 && kai.chi >= 15) {
-                kai.cycloneTimer = 30;
+                kai.cycloneTimer = 34;
                 kai.chi -= 15;
-                screenShake = 6;
+                screenShake = 7;
                 playSound('cyclone');
                 checkCycloneHit();
             }
@@ -753,67 +870,78 @@
 
             kai.x = Math.max(30, Math.min(1250 - kai.w, kai.x));
 
+            // Atualizar Chefe, Projéteis e Efeitos
             updateBaoZhi();
             updateProjectiles();
             updateParticles();
+            updateAfterImages();
             updateHUD();
         }
 
-        /* --- DETECÇÃO DE COMBATE DE KAI --- */
+        /* --- DETECÇÃO DE IMPACTO E COMBATE --- */
         function checkWhipHit() {
             const kx = kai.x + kai.w / 2;
             const ky = kai.y + kai.h / 2;
             let hitBox = { x: 0, y: 0, w: 0, h: 0 };
+            let hitAngle = 0;
 
             if (kai.attackDir === 'side') {
                 hitBox = {
-                    x: kai.facing === 1 ? kx : kx - 140,
-                    y: ky - 40,
-                    w: 140,
-                    h: 80
+                    x: kai.facing === 1 ? kx : kx - 170,
+                    y: ky - 50,
+                    w: 170,
+                    h: 90
                 };
+                hitAngle = kai.facing === 1 ? 0 : Math.PI;
             } else if (kai.attackDir === 'up') {
                 hitBox = {
-                    x: kx - 60,
-                    y: ky - 140,
-                    w: 120,
-                    h: 140
+                    x: kx - 70,
+                    y: ky - 170,
+                    w: 140,
+                    h: 170
                 };
+                hitAngle = -Math.PI / 2;
             } else if (kai.attackDir === 'down') {
                 hitBox = {
-                    x: kx - 60,
+                    x: kx - 70,
                     y: ky,
-                    w: 120,
-                    h: 130
+                    w: 140,
+                    h: 160
                 };
+                hitAngle = Math.PI / 2;
             }
 
             if (boxIntersect(hitBox, baozhi) && baozhi.hp > 0 && baozhi.state !== 'teleport') {
-                baozhi.hp -= 20;
-                kai.chi = Math.min(kai.maxChi, kai.chi + 12);
-                screenShake = 6;
+                baozhi.hp -= 25;
+                kai.chi = Math.min(kai.maxChi, kai.chi + 14);
+                screenShake = 8;
+                triggerHitStop(4); // Hit Stop dramático!
                 playSound('hit');
 
                 if (kai.attackDir === 'down') {
-                    kai.vy = -12;
+                    kai.vy = -13;
                     kai.coyoteTime = 5;
+                    kai.squashY = 1.3;
                 }
 
-                for (let i = 0; i < 20; i++) {
-                    addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*12, (Math.random()-0.5)*12, '#20f59e', 5, 20);
-                }
+                addSlashImpact(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, hitAngle);
 
                 if (baozhi.hp <= 0) defeatBoss();
             }
 
+            // Destruição de projéteis com corte
             for (let i = bossProjectiles.length - 1; i >= 0; i--) {
                 const p = bossProjectiles[i];
-                if (Math.hypot(p.x - (hitBox.x + hitBox.w/2), p.y - (hitBox.y + hitBox.h/2)) < 60) {
+                if (Math.hypot(p.x - (hitBox.x + hitBox.w/2), p.y - (hitBox.y + hitBox.h/2)) < 70) {
                     bossProjectiles.splice(i, 1);
-                    kai.chi = Math.min(kai.maxChi, kai.chi + 5);
-                    screenShake = 4;
+                    kai.chi = Math.min(kai.maxChi, kai.chi + 6);
+                    screenShake = 5;
+                    triggerHitStop(3);
                     playSound('hit');
-                    if (kai.attackDir === 'down') kai.vy = -11;
+                    addSlashImpact(p.x, p.y, hitAngle);
+                    if (kai.attackDir === 'down') {
+                        kai.vy = -12;
+                    }
                 }
             }
         }
@@ -821,16 +949,15 @@
         function checkCycloneHit() {
             const kx = kai.x + kai.w / 2;
             const ky = kai.y + kai.h / 2;
-            const cycloneRadius = 150;
+            const cycloneRadius = 160;
 
             const distBoss = Math.hypot(baozhi.x + baozhi.w/2 - kx, baozhi.y + baozhi.h/2 - ky);
-            if (distBoss < cycloneRadius + 40 && baozhi.hp > 0) {
-                baozhi.hp -= 40;
-                kai.chi = Math.min(kai.maxChi, kai.chi + 15);
+            if (distBoss < cycloneRadius + 45 && baozhi.hp > 0) {
+                baozhi.hp -= 45;
+                kai.chi = Math.min(kai.maxChi, kai.chi + 16);
+                triggerHitStop(4);
                 playSound('hit');
-                for (let i = 0; i < 25; i++) {
-                    addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*10, (Math.random()-0.5)*10, '#1ef59b', 6, 25);
-                }
+                addSlashImpact(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, 0);
                 if (baozhi.hp <= 0) defeatBoss();
             }
 
@@ -838,6 +965,7 @@
                 const p = bossProjectiles[i];
                 if (Math.hypot(p.x - kx, p.y - ky) < cycloneRadius) {
                     bossProjectiles.splice(i, 1);
+                    addSlashImpact(p.x, p.y, Math.random()*Math.PI*2);
                 }
             }
         }
@@ -846,29 +974,33 @@
         function updateBaoZhi() {
             if (baozhi.hp <= 0) return;
 
-            if (!baozhi.bossFightActive && Math.hypot(kai.x - baozhi.x, kai.y - baozhi.y) < 600) {
+            if (!baozhi.bossFightActive && Math.hypot(kai.x - baozhi.x, kai.y - baozhi.y) < 650) {
                 baozhi.bossFightActive = true;
             }
             if (!baozhi.bossFightActive) return;
 
+            // Movimento e Fumaça dos Incensários Orbitantes
             for (let c of baozhi.censers) {
                 c.angle += c.speed;
                 const cx = (baozhi.x + baozhi.w/2) + Math.cos(c.angle) * c.dist;
                 const cy = (baozhi.y + baozhi.h/2) + Math.sin(c.angle) * c.dist;
-                if (Math.random() < 0.3) {
-                    addParticle(cx, cy, (Math.random()-0.5)*1.5, -Math.random()*2, '#a855f7', 4, 30, true);
+                
+                // Emissão de fumaça de miasma roxa e verde
+                c.smokeTimer++;
+                if (c.smokeTimer % 2 === 0) {
+                    addParticle(cx, cy, (Math.random()-0.5)*1.8, -Math.random()*2.2, Math.random() < 0.6 ? '#c084fc' : '#2cfbad', 5, 32, true);
                 }
             }
 
-            baozhi.hoverTimer += 0.04;
-            baozhi.y = baozhi.hoverBaseY + Math.sin(baozhi.hoverTimer) * 25;
+            baozhi.hoverTimer += 0.045;
+            baozhi.y = baozhi.hoverBaseY + Math.sin(baozhi.hoverTimer) * 28;
             baozhi.facing = (kai.x < baozhi.x) ? -1 : 1;
 
             baozhi.stateTimer--;
             if (baozhi.stateTimer <= 0) {
                 if (baozhi.state === 'hover') {
                     const choice = Math.random();
-                    if (choice < 0.6) {
+                    if (choice < 0.65) {
                         baozhi.state = 'cast';
                         baozhi.stateTimer = 90;
                     } else {
@@ -876,39 +1008,40 @@
                         baozhi.stateTimer = 45;
                     }
                 } else if (baozhi.state === 'cast') {
+                    // Disparo em leque de 3 esferas de praga com brilho
                     for (let i = -1; i <= 1; i++) {
-                        const angle = Math.atan2(kai.y - baozhi.y, kai.x - baozhi.x) + (i * 0.3);
+                        const angle = Math.atan2(kai.y - baozhi.y, kai.x - baozhi.x) + (i * 0.28);
                         bossProjectiles.push({
                             x: baozhi.x + baozhi.w/2,
                             y: baozhi.y + baozhi.h/2,
-                            vx: Math.cos(angle) * 4.5,
-                            vy: Math.sin(angle) * 4.5,
-                            radius: 12,
-                            life: 240
+                            vx: Math.cos(angle) * 4.8,
+                            vy: Math.sin(angle) * 4.8,
+                            radius: 14,
+                            life: 250
                         });
                     }
                     baozhi.state = 'hover';
-                    baozhi.stateTimer = 80;
+                    baozhi.stateTimer = 85;
                 } else if (baozhi.state === 'teleport') {
                     const spots = [
                         { x: 220, y: 380 },
                         { x: 620, y: 260 },
-                        { x: 960, y: 380 }
+                        { x: 970, y: 380 }
                     ];
                     const next = spots[Math.floor(Math.random() * spots.length)];
                     baozhi.x = next.x;
                     baozhi.hoverBaseY = next.y;
                     baozhi.state = 'hover';
-                    baozhi.stateTimer = 70;
+                    baozhi.stateTimer = 75;
 
-                    for (let i = 0; i < 30; i++) {
-                        addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*9, (Math.random()-0.5)*9, '#9333ea', 5, 25);
+                    for (let i = 0; i < 35; i++) {
+                        addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*11, (Math.random()-0.5)*11, '#a855f7', 6, 28);
                     }
                 }
             }
         }
 
-        /* --- PROJÉTEIS & DANO EM KAI --- */
+        /* --- PROJÉTEIS & IMPACTOS --- */
         function updateProjectiles() {
             for (let i = bossProjectiles.length - 1; i >= 0; i--) {
                 const p = bossProjectiles[i];
@@ -916,21 +1049,28 @@
                 p.y += p.vy;
                 p.life--;
 
-                addParticle(p.x, p.y, 0, 0, '#c084fc', 6, 12);
+                addParticle(p.x, p.y, (Math.random()-0.5)*0.8, (Math.random()-0.5)*0.8, '#d946ef', 6, 14, true);
 
                 const distKai = Math.hypot(p.x - (kai.x + kai.w/2), p.y - (kai.y + kai.h/2));
-                if (distKai < p.radius + 20 && kai.isDashing === 0) {
+                if (distKai < p.radius + 24 && kai.isDashing === 0) {
                     kai.hp--;
-                    screenShake = 9;
+                    screenShake = 10;
+                    triggerHitStop(4);
                     playSound('hit');
-                    kai.vx = (p.vx > 0 ? 1 : -1) * 7;
+                    kai.vx = (p.vx > 0 ? 1 : -1) * 8;
                     kai.vy = -6;
+                    kai.squashX = 0.8;
+                    kai.squashY = 1.3;
                     bossProjectiles.splice(i, 1);
+
+                    for (let k = 0; k < 20; k++) {
+                        addParticle(kai.x + kai.w/2, kai.y + kai.h/2, (Math.random()-0.5)*8, (Math.random()-0.5)*8, '#f43f5e', 5, 20);
+                    }
 
                     if (kai.hp <= 0) {
                         kai.hp = kai.maxHp;
                         kai.x = 200;
-                        kai.y = 550;
+                        kai.y = 530;
                     }
                     continue;
                 }
@@ -943,9 +1083,10 @@
 
         function defeatBoss() {
             baozhi.state = 'defeated';
-            screenShake = 15;
-            for (let i = 0; i < 100; i++) {
-                addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*15, (Math.random()-0.5)*15, '#20f59e', 8, 60);
+            screenShake = 18;
+            triggerHitStop(8);
+            for (let i = 0; i < 120; i++) {
+                addParticle(baozhi.x + baozhi.w/2, baozhi.y + baozhi.h/2, (Math.random()-0.5)*18, (Math.random()-0.5)*18, '#2cfbad', 8, 70);
             }
             document.getElementById('popup-message').style.display = 'block';
         }
@@ -955,7 +1096,7 @@
             baozhi.state = 'hover';
             baozhi.stateTimer = 120;
             baozhi.x = 950;
-            baozhi.hoverBaseY = 400;
+            baozhi.hoverBaseY = 380;
             baozhi.bossFightActive = true;
             kai.hp = kai.maxHp;
             kai.chi = 50;
@@ -980,6 +1121,7 @@
         }
 
         function handleVerticalCollisions() {
+            const wasInAir = !kai.grounded;
             kai.grounded = false;
             for (let plat of platforms) {
                 if (boxIntersect(kai, plat)) {
@@ -987,6 +1129,14 @@
                         kai.y = plat.y - kai.h;
                         kai.vy = 0;
                         kai.grounded = true;
+                        // Efeito de impacto no solo (Landing Squash)
+                        if (wasInAir) {
+                            kai.squashX = 1.35;
+                            kai.squashY = 0.72;
+                            for (let i = 0; i < 8; i++) {
+                                addParticle(kai.x + kai.w/2 + (Math.random()-0.5)*40, kai.y + kai.h, (Math.random()-0.5)*4, -Math.random()*2, '#17ff97', 3, 14);
+                            }
+                        }
                     } else if (kai.vy < 0) {
                         kai.y = plat.y + plat.h;
                         kai.vy = 0;
@@ -1004,85 +1154,186 @@
                 const p = particles[i];
                 p.x += p.vx;
                 p.y += p.vy;
+                if (p.rotSpeed) p.rot += p.rotSpeed;
                 p.life--;
                 if (p.life <= 0) particles.splice(i, 1);
             }
         }
 
-        /* --- RENDERIZAÇÃO GRÁFICA --- */
+        function updateAfterImages() {
+            for (let i = afterImages.length - 1; i >= 0; i--) {
+                const ai = afterImages[i];
+                ai.life--;
+                ai.alpha = (ai.life / 14) * 0.65;
+                if (ai.life <= 0) afterImages.splice(i, 1);
+            }
+        }
+
+        /* --- RENDERIZAÇÃO GRÁFICA HD --- */
         function draw() {
             ctx.save();
 
+            // Screen Shake
             if (screenShake > 0) {
                 const rx = (Math.random() - 0.5) * screenShake;
                 const ry = (Math.random() - 0.5) * screenShake;
                 ctx.translate(rx, ry);
             }
 
-            ctx.fillStyle = '#060a08';
+            // 1. FUNDO COM PARALAXE DA CATACUMBA
+            if (assets.bg.complete) {
+                // Efeito sutil de câmera paralaxe
+                const px = -(kai.x - 640) * 0.04;
+                const py = -(kai.y - 360) * 0.03;
+                ctx.drawImage(assets.bg, px - 40, py - 20, 1360, 760);
+            } else {
+                ctx.fillStyle = '#060a08';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Vinheta / Névoa de Iluminação Ambiente
+            const ambientGrad = ctx.createRadialGradient(canvas.width/2, 280, 80, canvas.width/2, 280, 800);
+            ambientGrad.addColorStop(0, 'rgba(10, 45, 30, 0.2)');
+            ambientGrad.addColorStop(1, 'rgba(2, 6, 4, 0.7)');
+            ctx.fillStyle = ambientGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const bgGradient = ctx.createRadialGradient(canvas.width/2, 200, 50, canvas.width/2, 200, 700);
-            bgGradient.addColorStop(0, 'rgba(10, 45, 30, 0.4)');
-            bgGradient.addColorStop(1, 'rgba(4, 8, 6, 1)');
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Poeira de Chi Flutuante no Cenário
+            for (let m of ambientMotes) {
+                ctx.fillStyle = `rgba(44, 251, 173, ${m.alpha})`;
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
-            ctx.fillStyle = '#0a1410';
-            ctx.fillRect(120, 100, 70, 540);
-            ctx.fillRect(450, 80, 85, 560);
-            ctx.fillRect(800, 110, 75, 530);
-            ctx.fillRect(1100, 90, 70, 550);
-
+            // Anéis de Grapple
             for (let gp of grapplePoints) {
-                ctx.strokeStyle = gp.active ? '#ffffff' : '#20f59e';
-                ctx.lineWidth = 3;
-                ctx.shadowColor = '#20f59e';
-                ctx.shadowBlur = gp.active ? 25 : 12;
-                ctx.beginPath();
-                ctx.arc(gp.x, gp.y, 14, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
-
-            for (let plat of platforms) {
-                ctx.fillStyle = '#111b16';
-                ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-
-                ctx.strokeStyle = '#225c43';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
-
-                ctx.fillStyle = '#1ef59b';
-                ctx.fillRect(plat.x, plat.y, plat.w, 3);
-            }
-
-            drawKai();
-
-            if (baozhi.hp > 0) drawBaoZhi();
-
-            for (let p of bossProjectiles) {
+                const glowSize = 14 + Math.sin(gp.pulse) * 4;
                 ctx.save();
-                ctx.shadowColor = '#d946ef';
-                ctx.shadowBlur = 15;
-                ctx.fillStyle = '#f0abfc';
+                ctx.strokeStyle = gp.active ? '#ffffff' : '#2cfbad';
+                ctx.lineWidth = 3.5;
+                ctx.shadowColor = '#2cfbad';
+                ctx.shadowBlur = gp.active ? 30 : 15;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.arc(gp.x, gp.y, glowSize, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Núcleo luminoso
+                ctx.fillStyle = gp.active ? '#ffffff' : 'rgba(44, 251, 173, 0.5)';
+                ctx.beginPath();
+                ctx.arc(gp.x, gp.y, 6, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
 
+            // 2. PLATAFORMAS TEXTURIZADAS
+            for (let plat of platforms) {
+                if (plat.type === 'ground' || plat.type === 'stone') {
+                    if (assets.tile.complete) {
+                        ctx.save();
+                        // Desenhar textura de pedra repetida
+                        const tileW = 240;
+                        const tileH = plat.h;
+                        ctx.beginPath();
+                        ctx.roundRect(plat.x, plat.y, plat.w, plat.h, 4);
+                        ctx.clip();
+                        for (let tx = plat.x; tx < plat.x + plat.w; tx += tileW) {
+                            ctx.drawImage(assets.tile, tx, plat.y - 12, tileW, plat.h + 24);
+                        }
+                        ctx.restore();
+
+                        // Borda superior esmeralda com glow
+                        ctx.strokeStyle = '#2cfbad';
+                        ctx.lineWidth = 2.5;
+                        ctx.shadowColor = '#2cfbad';
+                        ctx.shadowBlur = 12;
+                        ctx.beginPath();
+                        ctx.moveTo(plat.x, plat.y);
+                        ctx.lineTo(plat.x + plat.w, plat.y);
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    } else {
+                        ctx.fillStyle = '#111b16';
+                        ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+                    }
+                }
+            }
+
+            // 3. AFTER-IMAGES DO CHI DASH
+            for (let ai of afterImages) {
+                ctx.save();
+                ctx.globalAlpha = ai.alpha;
+                ctx.translate(ai.x + kai.w/2, ai.y + kai.h/2);
+                if (ai.facing === -1) ctx.scale(-1, 1);
+                ctx.shadowColor = '#2cfbad';
+                ctx.shadowBlur = 20;
+                if (assets.kai.complete) {
+                    ctx.drawImage(assets.kai, -48, -55, 96, 110);
+                }
+                ctx.restore();
+            }
+
+            // 4. GENERAL KAI (COM RIGGING ORGÂNICO E SQUASH & STRETCH)
+            drawKai();
+
+            // 5. CHEFE BAO-ZHI
+            if (baozhi.hp > 0) drawBaoZhi();
+
+            // 6. PROJÉTEIS DE PRAGA
+            for (let p of bossProjectiles) {
+                ctx.save();
+                ctx.shadowColor = '#e879f9';
+                ctx.shadowBlur = 22;
+                ctx.fillStyle = '#f5d0fe';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Núcleo de alma violeta
+                ctx.fillStyle = '#a855f7';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 7. PARTÍCULAS E ESTILHAÇOS DE CRISTAL
             for (let p of particles) {
                 ctx.save();
-                if (p.glow) {
-                    ctx.shadowColor = p.color;
-                    ctx.shadowBlur = 8;
-                }
-                ctx.fillStyle = p.color;
                 ctx.globalAlpha = p.life / p.maxLife;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
+
+                if (p.isShockwave) {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = '#2cfbad';
+                    ctx.shadowBlur = 15;
+                    const curSize = p.size + (p.targetSize - p.size) * (1 - p.life / p.maxLife);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, curSize, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (p.isSlashCrystal) {
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = '#a7f3d0';
+                    ctx.shadowColor = '#2cfbad';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -p.size * 1.6);
+                    ctx.lineTo(p.size, 0);
+                    ctx.lineTo(0, p.size * 1.6);
+                    ctx.lineTo(-p.size, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    if (p.glow) {
+                        ctx.shadowColor = p.color;
+                        ctx.shadowBlur = 10;
+                    }
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
             }
 
@@ -1090,31 +1341,31 @@
             requestAnimationFrame(draw);
         }
 
+        /* --- DESENHO DE KAI --- */
         function drawKai() {
             const kx = kai.x + kai.w / 2;
             const ky = kai.y + kai.h / 2;
 
             ctx.save();
             ctx.translate(kx, ky);
+
+            // Squash & Stretch dinâmico
+            ctx.scale(kai.squashX, kai.squashY);
+
+            // Inversão de direção
             if (kai.facing === -1) ctx.scale(-1, 1);
 
-            if (kai.healChannel > 0) {
-                ctx.strokeStyle = 'rgba(30, 245, 155, 0.8)';
-                ctx.lineWidth = 4;
-                ctx.shadowColor = '#1ef59b';
-                ctx.shadowBlur = 20;
-                ctx.beginPath();
-                ctx.arc(0, 0, 45, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
+            // Respiração sutil em repouso
+            const breathe = Math.sin(kai.animTimer * 2) * 0.025;
+            ctx.scale(1 + breathe, 1 - breathe);
 
+            // Efeito de Linha de Grapple com Elos de Corrente
             if (kai.grappleActive && kai.grappleTarget) {
                 ctx.save();
-                ctx.strokeStyle = '#20f59e';
+                ctx.strokeStyle = '#2cfbad';
                 ctx.lineWidth = 3;
-                ctx.shadowColor = '#20f59e';
-                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#2cfbad';
+                ctx.shadowBlur = 12;
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 const localX = (kai.grappleTarget.x - kx) * kai.facing;
@@ -1124,108 +1375,88 @@
                 ctx.restore();
             }
 
+            // Jade Cyclone (Vórtice 360°)
             if (kai.cycloneTimer > 0) {
                 ctx.save();
-                ctx.strokeStyle = '#1ef59b';
-                ctx.lineWidth = 6;
-                ctx.shadowColor = '#1ef59b';
-                ctx.shadowBlur = 25;
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.strokeStyle = '#2cfbad';
+                ctx.lineWidth = 8;
+                ctx.shadowColor = '#2cfbad';
+                ctx.shadowBlur = 35;
                 ctx.beginPath();
-                ctx.arc(0, 0, 135, 0, Math.PI * 2);
+                ctx.arc(0, 0, 145, 0, Math.PI * 2);
                 ctx.stroke();
+
+                // Lâmina giratória em vórtice
+                if (assets.vfxSlash.complete) {
+                    ctx.save();
+                    ctx.rotate(kai.animTimer * 8);
+                    ctx.drawImage(assets.vfxSlash, -150, -150, 300, 300);
+                    ctx.restore();
+                }
                 ctx.restore();
             }
 
-            ctx.fillStyle = '#1c2420';
-            ctx.fillRect(-22, -28, 44, 56);
+            // SPRITE PRINCIPAL DE KAI
+            if (assets.kai.complete) {
+                // Iluminação nos pés e sombra
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.beginPath();
+                ctx.ellipse(0, 42, 28, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
 
-            ctx.fillStyle = '#323d37';
-            ctx.fillRect(-18, -22, 36, 32);
+                // Desenho do guerreiro búfalo
+                ctx.drawImage(assets.kai, -54, -62, 108, 124);
+            }
 
-            ctx.fillStyle = '#121a15';
-            ctx.fillRect(-20, 10, 40, 7);
-            ctx.fillStyle = '#20f59e';
-            ctx.shadowColor = '#20f59e';
-            ctx.shadowBlur = 8;
-            ctx.fillRect(-12, 16, 6, 10);
-            ctx.fillRect(-2, 16, 6, 12);
-            ctx.fillRect(8, 16, 6, 10);
-            ctx.shadowBlur = 0;
-
-            ctx.fillStyle = '#141c17';
-            ctx.fillRect(-16, -42, 32, 22);
-
-            ctx.fillStyle = '#20f59e';
-            ctx.shadowColor = '#20f59e';
-            ctx.shadowBlur = 10;
-            ctx.fillRect(2, -36, 7, 4);
-            ctx.shadowBlur = 0;
-
-            ctx.strokeStyle = '#101713';
-            ctx.lineWidth = 7;
-            ctx.beginPath();
-            ctx.moveTo(-10, -42);
-            ctx.quadraticCurveTo(-30, -60, -15, -75);
-            ctx.stroke();
-            ctx.strokeStyle = '#20f59e';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(-18, -68);
-            ctx.lineTo(-15, -75);
-            ctx.stroke();
-
-            ctx.strokeStyle = '#101713';
-            ctx.lineWidth = 7;
-            ctx.beginPath();
-            ctx.moveTo(10, -42);
-            ctx.quadraticCurveTo(30, -60, 18, -78);
-            ctx.stroke();
-            ctx.strokeStyle = '#20f59e';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(22, -70);
-            ctx.lineTo(18, -78);
-            ctx.stroke();
-
+            // EFEITO VISUAL DE CORTE DE LÂMINA DE JADE (VFX SLASH ARC)
             if (kai.attackTimer > 0) {
                 ctx.save();
-                ctx.strokeStyle = '#1ef59b';
-                ctx.lineWidth = 5;
-                ctx.shadowColor = '#1ef59b';
-                ctx.shadowBlur = 20;
+                ctx.globalCompositeOperation = 'lighter';
 
-                if (kai.attackDir === 'side') {
+                const progress = 1 - (kai.attackTimer / kai.attackMaxTimer);
+                const slashAlpha = Math.sin(progress * Math.PI);
+                ctx.globalAlpha = slashAlpha;
+
+                if (assets.vfxSlash.complete) {
+                    if (kai.attackDir === 'side') {
+                        ctx.save();
+                        ctx.translate(55, -10);
+                        ctx.rotate(0.2);
+                        ctx.drawImage(assets.vfxSlash, -60, -100, 190, 190);
+                        ctx.restore();
+                    } else if (kai.attackDir === 'up') {
+                        ctx.save();
+                        ctx.translate(0, -65);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.drawImage(assets.vfxSlash, -95, -95, 190, 190);
+                        ctx.restore();
+                    } else if (kai.attackDir === 'down') {
+                        ctx.save();
+                        ctx.translate(0, 60);
+                        ctx.rotate(Math.PI / 2);
+                        ctx.drawImage(assets.vfxSlash, -95, -95, 190, 190);
+                        ctx.restore();
+                    }
+                } else {
+                    // Fallback de arco
+                    ctx.strokeStyle = '#2cfbad';
+                    ctx.lineWidth = 8;
+                    ctx.shadowColor = '#2cfbad';
+                    ctx.shadowBlur = 25;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 110, -0.6, 0.8);
+                    ctx.arc(0, 0, 120, -0.6, 0.8);
                     ctx.stroke();
-                    ctx.fillStyle = '#a7f3d0';
-                    ctx.fillRect(100, 10, 30, 12);
-                } else if (kai.attackDir === 'up') {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 110, -2.4, -0.8);
-                    ctx.stroke();
-                    ctx.fillStyle = '#a7f3d0';
-                    ctx.fillRect(-15, -120, 14, 32);
-                } else if (kai.attackDir === 'down') {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 105, 0.8, 2.3);
-                    ctx.stroke();
-                    ctx.fillStyle = '#a7f3d0';
-                    ctx.fillRect(-10, 100, 14, 30);
                 }
                 ctx.restore();
-            } else {
-                ctx.fillStyle = '#20f59e';
-                ctx.shadowColor = '#20f59e';
-                ctx.shadowBlur = 8;
-                ctx.fillRect(18, -5, 8, 26);
-                ctx.fillRect(-24, 0, 8, 24);
-                ctx.shadowBlur = 0;
             }
 
             ctx.restore();
         }
 
+        /* --- DESENHO DE BAO-ZHI --- */
         function drawBaoZhi() {
             const bx = baozhi.x + baozhi.w / 2;
             const by = baozhi.y + baozhi.h / 2;
@@ -1233,66 +1464,61 @@
             ctx.save();
             ctx.translate(bx, by);
 
+            // Incensários Orbitantes com Física Pendular
             for (let c of baozhi.censers) {
                 const cx = Math.cos(c.angle) * c.dist;
                 const cy = Math.sin(c.angle) * c.dist;
 
-                ctx.strokeStyle = '#581c87';
-                ctx.lineWidth = 2;
+                // Corrente de elos
+                ctx.save();
+                ctx.strokeStyle = '#4c1d95';
+                ctx.lineWidth = 2.5;
                 ctx.beginPath();
-                ctx.moveTo(0, 0);
+                ctx.moveTo(0, -10);
                 ctx.lineTo(cx, cy);
                 ctx.stroke();
 
+                // Incensário com glow
                 ctx.fillStyle = '#a855f7';
-                ctx.shadowColor = '#a855f7';
-                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#d946ef';
+                ctx.shadowBlur = 16;
                 ctx.beginPath();
-                ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+                ctx.arc(cx, cy, 12, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowBlur = 0;
+
+                // Chama interna
+                ctx.fillStyle = '#f5d0fe';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
             }
 
-            ctx.fillStyle = '#3b0764';
-            ctx.beginPath();
-            ctx.moveTo(-25, -20);
-            ctx.lineTo(25, -20);
-            ctx.lineTo(32, 45);
-            ctx.lineTo(-32, 45);
-            ctx.closePath();
-            ctx.fill();
+            // SPRITE REAL DE BAO-ZHI
+            if (assets.baozhi.complete) {
+                ctx.save();
+                // Flutuação com inclinação espectral
+                const floatTilt = Math.sin(baozhi.hoverTimer * 1.5) * 0.04;
+                ctx.rotate(floatTilt);
 
-            ctx.fillStyle = '#f3e8ff';
-            ctx.beginPath();
-            ctx.arc(0, -25, 20, 0, Math.PI * 2);
-            ctx.fill();
+                if (baozhi.facing === 1) ctx.scale(-1, 1);
 
-            ctx.fillStyle = '#1e1b4b';
-            ctx.fillRect(-10, -28, 6, 8);
-            ctx.fillRect(4, -28, 6, 8);
-            ctx.fillStyle = '#c084fc';
-            ctx.fillRect(-8, -26, 3, 4);
-            ctx.fillRect(6, -26, 3, 4);
+                // Sombra no ar
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.15)';
+                ctx.shadowColor = '#a855f7';
+                ctx.shadowBlur = 25;
+                ctx.beginPath();
+                ctx.ellipse(0, 55, 36, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
 
-            ctx.strokeStyle = '#e9d5ff';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(-12, -40);
-            ctx.lineTo(-24, -60);
-            ctx.moveTo(12, -40);
-            ctx.lineTo(24, -60);
-            ctx.stroke();
-
-            ctx.strokeStyle = '#d8b4fe';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(35, -45);
-            ctx.lineTo(35, 45);
-            ctx.stroke();
+                ctx.drawImage(assets.baozhi, -65, -80, 130, 160);
+                ctx.restore();
+            }
 
             ctx.restore();
         }
 
+        /* --- MODAL DE ARTES --- */
         function openArtModal() {
             document.getElementById('modal-art').style.display = 'flex';
         }
@@ -1300,6 +1526,7 @@
             document.getElementById('modal-art').style.display = 'none';
         }
 
+        /* --- INICIALIZAÇÃO --- */
         updateHUD();
         setInterval(update, 1000 / 60);
         requestAnimationFrame(draw);
